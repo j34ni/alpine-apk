@@ -1,0 +1,63 @@
+name: build-and-publish
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Restore signing key
+        env:
+          KEY_B64: ${{ secrets.ABUILD_PRIVKEY_B64 }}
+        run: |
+          mkdir -p keys-runner
+          printf '%s' "$KEY_B64" | base64 -d > keys-runner/priv.rsa
+          cp keys/*.rsa.pub keys-runner/priv.rsa.pub
+
+      - name: Cache distfiles
+        uses: actions/cache@v4
+        with:
+          path: .distfiles
+          key: distfiles-${{ hashFiles('j34ni/*/APKBUILD') }}
+
+      - name: Build all packages (alpine:edge, abuild)
+        run: |
+          mkdir -p .distfiles
+          docker run --rm \
+            -e WS=/ws -e KEYS=/keys -e CACHE=/cache \
+            -v "$PWD:/ws" -v "$PWD/keys-runner:/keys" -v "$PWD/.distfiles:/cache" \
+            alpine:edge sh /ws/scripts/build.sh
+
+      - name: Assemble Pages site
+        run: |
+          mkdir -p dist/edge dist/keys
+          cp -r out/j34ni dist/edge/j34ni
+          cp keys/*.rsa.pub dist/keys/
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

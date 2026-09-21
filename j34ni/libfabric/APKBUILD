@@ -1,0 +1,75 @@
+# Maintainer: Jean Iaquinta <jeani@uio.no>
+# HPE Slingshot fork of libfabric with the CXI provider; not ofiwg upstream.
+_realname=shs-libfabric
+pkgname=libfabric
+pkgver=14.0.1
+pkgrel=0
+pkgdesc="Library for high performance fabric networks (HPE Slingshot fork, CXI provider)"
+url="https://github.com/HewlettPackard/shs-libfabric"
+license="BSD-2-Clause OR GPL-2.0-only"
+arch="x86_64 aarch64"
+options="!check" # tests need CXI hardware
+depends_dev="
+	cassini-headers=$pkgver-r$pkgrel
+	cxi-uapi-headers=$pkgver-r$pkgrel
+	libcxi=$pkgver-r$pkgrel
+	"
+makedepends="
+	autoconf
+	automake
+	cassini-headers
+	curl-dev
+	cxi-uapi-headers
+	json-c-dev
+	libcxi-dev
+	libnl3-dev
+	libtool
+	linux-headers
+	pkgconf
+	rdma-core-dev
+	"
+subpackages="$pkgname-dev $pkgname-doc"
+source="
+	$_realname-$pkgver.tar.gz::$url/archive/refs/tags/release/shs-$pkgver.tar.gz
+	libfabric-musl.patch
+	"
+builddir="$srcdir/$_realname-release-shs-$pkgver"
+
+prepare() {
+	default_prepare
+	autoreconf -ivf
+}
+
+build() {
+	# usnic: EOL platform whose source needs <sys/queue.h> (glibc-only).
+	# --with-cassini-headers and --with-cxi-uapi-headers are not real
+	# options of this configure script; kept for parity with the
+	# conda-forge recipe, headers resolve in /usr.
+	./configure \
+		--prefix=/usr \
+		--enable-cxi \
+		--with-cassini-headers=/usr \
+		--with-cxi-uapi-headers=/usr \
+		--with-curl=/usr \
+		--with-json-c=/usr \
+		--with-libnl=/usr \
+		--disable-lpp \
+		--disable-psm3 \
+		--disable-opx \
+		--disable-efa \
+		--disable-usnic \
+		--disable-static
+	make src/libfabric.la
+	make util/fi_info util/fi_pingpong util/fi_strerror \
+		util/fi_mon_sampler
+}
+
+package() {
+	make install-exec install-data DESTDIR="$pkgdir"
+	install -Dm644 COPYING "$pkgdir"/usr/share/licenses/$pkgname/COPYING
+}
+
+sha512sums="
+6eb156084eebcdc9acf9748592d1de24ff59d53e5d2b21c21b030be7072e284ba15b191d5c43f5ee0a76cd1cb9b4ebe3bec1d5ed16a0f87f055b6bd56b6a5dab  shs-libfabric-14.0.1.tar.gz
+f5973af135cc17de6b17b9b85eb8b7f5b55c338e922b6876982345ce7e83970c0a7c4a5c7f439c4d181bf258b35a8f5d28b1973ca676395edbe308a5a1437ff1  libfabric-musl.patch
+"

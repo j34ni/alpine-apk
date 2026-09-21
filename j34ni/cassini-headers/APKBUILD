@@ -1,0 +1,29 @@
+# Maintainer: Jean Iaquinta <jeani@uio.no>
+_realname=shs-cassini-headers
+pkgname=cassini-headers
+pkgver=14.0.1
+pkgrel=0
+pkgdesc="HPE Slingshot Cassini CSR and counter definitions headers"
+url="https://github.com/HewlettPackard/shs-cassini-headers"
+license="GPL-2.0-or-later OR BSD-3-Clause"
+arch="noarch"
+source="$_realname-$pkgver.tar.gz::$url/archive/refs/tags/release/shs-$pkgver.tar.gz"
+builddir="$srcdir/$_realname-release-shs-$pkgver"
+
+build() {
+	:
+}
+
+package() {
+	install -d "$pkgdir"/usr/include
+	cp -a include/sbl "$pkgdir"/usr/include/
+	install -m 644 include/*.h "$pkgdir"/usr/include/
+	install -Dm644 share/cassini-headers/csr_defs.json \
+		"$pkgdir"/usr/share/cassini-headers/csr_defs.json
+	install -Dm644 cray-cassini-headers-public.spec \
+		"$pkgdir"/usr/share/licenses/$pkgname/cray-cassini-headers-public.spec
+}
+
+sha512sums="
+bf75772d795644d7fbda5e3033fd6786ac4649c8cfc86d1447b87027c32855a5f31ca48ab542be6bd01a96b95383562c3417353643e9eb56f749a736138ab0e1  shs-cassini-headers-14.0.1.tar.gz
+"

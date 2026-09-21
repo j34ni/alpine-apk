@@ -1,0 +1,37 @@
+# Maintainer: Jean Iaquinta <jeani@uio.no>
+pkgname=xpmem
+pkgver=2.7.4
+pkgrel=0
+pkgdesc="User library for the Linux cross-process memory (xpmem) module"
+url="https://github.com/openucx/xpmem"
+license="LGPL-2.1-only"
+arch="x86_64 aarch64"
+options="!check" # integration tests need the out-of-tree kernel module (/dev/xpmem)
+makedepends="autoconf automake libtool linux-headers"
+depends_dev="linux-headers" # xpmem.h includes <linux/types.h>
+subpackages="$pkgname-dev"
+source="$pkgname-$pkgver.tar.gz::$url/archive/refs/tags/v$pkgver.tar.gz"
+
+prepare() {
+	default_prepare
+	autoreconf -ivf
+}
+
+build() {
+	./configure \
+		--prefix=/usr \
+		--disable-kernel-module \
+		--disable-static \
+		--enable-shared
+	make
+}
+
+package() {
+	make DESTDIR="$pkgdir" install
+	rm -f "$pkgdir"/usr/lib/*.la
+	install -Dm644 COPYING "$pkgdir"/usr/share/licenses/$pkgname/COPYING
+}
+
+sha512sums="
+d6b2152609ca84b92ea9ada6b591c8fa7706b48695959e578dc316079e9d178c65f86ce47fb44c8677ae812fecc20ba604d8819371ca10acd5d805bf310510dd  xpmem-2.7.4.tar.gz
+"

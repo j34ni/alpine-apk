@@ -1,0 +1,15 @@
+Description: Drop FUSE 2-only stats_chan member from retry_handler
+ .
+ Alpine ships fuse3 only.
+Origin: vendor, https://github.com/j34ni/shs-libcxi-feedstock
+Upstream-status: not submitted
+--- a/retry_handler/rh.h
++++ b/retry_handler/rh.h
+@@ -147,7 +147,6 @@
+ 
+ 	pthread_t stats_thread;
+ 	struct fuse *stats_fuse;
+-	struct fuse_chan *stats_chan;
+ 	struct {
+ 		unsigned int spt_alloc;
+ 		unsigned int spt_freed;

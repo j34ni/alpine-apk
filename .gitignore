@@ -1,0 +1,8 @@
+out/
+*.rsa
+j34ni/*/src/
+j34ni/*/pkg/
+j34ni/*/tmp/
+j34ni/*/.abuild/
+j34ni/*/*.src.tar.gz
+abuild.log

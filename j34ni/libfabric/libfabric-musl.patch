@@ -1,0 +1,53 @@
+Description: Fix build with musl libc
+ .
+ - cxi: define MAP_HUGE_SHIFT (same as the conda-forge define_map_huge_shift patch)
+ - cxi: include <libgen.h> for basename()
+ - hook/monitor: <fstab.h> is glibc-only, guard it
+ - sm2: include <signal.h> for kill()
+Origin: vendor, https://github.com/j34ni/mpich-feedstock
+Upstream-status: not submitted
+--- a/prov/cxi/src/cxip_evtq.c
++++ b/prov/cxi/src/cxip_evtq.c
+@@ -465,6 +465,10 @@
+ 	return num_slots * C_EE_CFG_ECB_SIZE;
+ }
+ 
++#ifndef MAP_HUGE_SHIFT
++#define MAP_HUGE_SHIFT 26
++#endif
++
+ #define MAP_HUGE_2MB    (21 << MAP_HUGE_SHIFT)
+ int cxip_evtq_init(struct cxip_evtq *evtq, struct cxip_cq *cq,
+ 		   size_t num_events, size_t num_fc_events,
+--- a/prov/cxi/src/cxip_if.c
++++ b/prov/cxi/src/cxip_if.c
+@@ -8,6 +8,7 @@
+ 
+ #include <stdlib.h>
+ #include <string.h>
++#include <libgen.h>
+ #include <unistd.h>
+ #include <limits.h>
+ #include <dirent.h>
+--- a/prov/hook/monitor/src/hook_monitor.c
++++ b/prov/hook/monitor/src/hook_monitor.c
+@@ -50,7 +50,9 @@
+ #include <sys/mount.h>
+ #endif
+ 
++#ifdef __GLIBC__
+ #include <fstab.h>
++#endif
+ #include <libgen.h>
+ 
+ struct monitor_environment mon_env = {
+--- a/prov/sm2/src/sm2_coordination.c
++++ b/prov/sm2/src/sm2_coordination.c
+@@ -34,6 +34,7 @@
+ #include "sm2.h"
+ #include "sm2_atom.h"
+ #include <fcntl.h>
++#include <signal.h>
+ #include <stdio.h>
+ #include <stdlib.h>
+ #include <sys/mman.h>

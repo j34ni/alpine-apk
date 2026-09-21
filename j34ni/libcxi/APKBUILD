@@ -1,0 +1,69 @@
+# Maintainer: Jean Iaquinta <jeani@uio.no>
+_realname=shs-libcxi
+pkgname=libcxi
+pkgver=14.0.1
+pkgrel=0
+pkgdesc="Userspace driver library for HPE Slingshot (Cassini) NICs"
+url="https://github.com/HewlettPackard/shs-libcxi"
+license="LGPL-2.1-only OR BSD-3-Clause"
+arch="x86_64 aarch64"
+options="!check" # unit tests require CXI hardware
+depends_dev="
+	cassini-headers=$pkgver-r$pkgrel
+	cxi-uapi-headers=$pkgver-r$pkgrel
+	"
+makedepends="
+	autoconf
+	automake
+	cassini-headers
+	cxi-uapi-headers
+	fuse3-dev
+	linux-headers
+	libconfig-dev
+	libnl3-dev
+	libtool
+	libuv-dev
+	lm-sensors-dev
+	numactl-dev
+	python3
+	pkgconf
+	yaml-dev
+	"
+subpackages="$pkgname-dev $pkgname-doc"
+source="
+	$_realname-$pkgver.tar.gz::$url/archive/refs/tags/release/shs-$pkgver.tar.gz
+	libcxi-musl.patch
+	fix-fuse3-configure.patch
+	fix-fuse3-stats.patch
+	fix-fuse3-rh.patch
+	"
+builddir="$srcdir/$_realname-release-shs-$pkgver"
+
+prepare() {
+	default_prepare
+	sed -i 's|../cassini-headers/install/share/cassini-headers/csr_defs.json|/usr/share/cassini-headers/csr_defs.json|g' \
+		utils/cxi_dump_csrs.py
+	autoreconf -ivf
+}
+
+build() {
+	./configure \
+		--prefix=/usr \
+		--with-udevrulesdir=/usr/lib/udev/rules.d \
+		--enable-static=no
+	make
+}
+
+package() {
+	make DESTDIR="$pkgdir" install
+	rm -f "$pkgdir"/usr/lib/*.la
+	install -Dm644 cray-libcxi.spec \
+		"$pkgdir"/usr/share/licenses/$pkgname/cray-libcxi.spec
+}
+sha512sums="
+73c06efb5a5d37a83c6d43292b4b2e7aec1cebe7c615e885b3815fad060411146b285f68cf0739c8fb448d5e21dd546dce0cf195ec8278dc2ea0d0eca37e3f9f  shs-libcxi-14.0.1.tar.gz
+b5eb44f713674e3b7e5b7d24da417442029cfc628dbd4d84da8ab57c11ff9404f44e01b5eb4565fd1ff450ebfec1be711760492ffa9356f7d1f203855183ce5e  libcxi-musl.patch
+a58b2c1ef3fa74a16ae13db1bd85d329ee864cf0489a5ac776df4d118e3ad9c767216e6586c34484ffec5aee0ad9b7d63974757eaf40be59275e6574c55e2976  fix-fuse3-configure.patch
+11514b047437c4cc8ab7b9769dab9efc0461f0f002476f22658bae265864279890207ef1c5a403b44da69a876db34faf7afd8929fc45b9c976fbb9d33974cf49  fix-fuse3-stats.patch
+a00bd58697291bf4af50b66645f04930e922230c6daf2ad8a2a252e5b083106389c418b9c794a241decd5442f1ef9ef29ecdc1f65d720113cf3b1244cdfffe0b  fix-fuse3-rh.patch
+"

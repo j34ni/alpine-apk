@@ -1,0 +1,73 @@
+Description: Fix build with musl libc and Alpine's -Werror
+ .
+ Missing includes (time.h, endian.h); struct udphdr field names via
+ linux/udp.h (equivalent of the conda-forge fix-udp-header patch); silence
+ unused-variable warnings turned fatal by -Werror.
+Origin: vendor, https://github.com/j34ni/shs-libcxi-feedstock
+Upstream-status: not submitted
+--- a/include/libcxi.h	2026-02-03 15:20:38.000000000 +0000
++++ b/include/libcxi.h	2026-09-11 21:22:31.282481099 +0000
+@@ -8,6 +8,7 @@
+ #include <stddef.h>
+ #include <errno.h>
+ #include <assert.h>
++#include <time.h>
+ 
+ #ifdef __cplusplus
+ extern "C" {
+--- a/utils/cxi_udp_gen.c	2026-02-03 15:20:38.000000000 +0000
++++ b/utils/cxi_udp_gen.c	2026-09-11 21:26:03.018930773 +0000
+@@ -13,7 +13,7 @@
+ #include <arpa/inet.h>
+ #include <netinet/ether.h>
+ #include <netinet/ip.h>
+-#include <netinet/udp.h>
++#include <linux/udp.h>
+ #include <pthread.h>
+ #include <time.h>
+ #include <stdatomic.h>
+@@ -165,10 +165,10 @@
+ 	struct udphdr *udp = &skb->udphdr;
+ 	uint32_t sum;
+ 
+-	udp->uh_sport = htons(src_port);
+-	udp->uh_dport = htons(55555);
+-	udp->uh_ulen = htons(udp_payload_len);
+-	udp->uh_sum = 0;
++	udp->source = htons(src_port);
++	udp->dest = htons(55555);
++	udp->len = htons(udp_payload_len);
++	udp->check = 0;
+ 
+ 	sum = header_checksum(skb, udp_payload_len);
+ 
+@@ -197,7 +197,7 @@
+ 		sum = sum ?: 0xffff;
+ 	}
+ 
+-	udp->uh_sum = sum;
++	udp->check = sum;
+ }
+ 
+ #define MIN(a, b) (((a) < (b)) ? (a) : (b))
+--- a/utils/cxi_dump_csrs.c	2026-02-03 15:20:38.000000000 +0000
++++ b/utils/cxi_dump_csrs.c	2026-09-11 21:26:03.020930806 +0000
+@@ -95,6 +95,8 @@
+ 
+ 	is_c1 = dev->info.cassini_version & CASSINI_1;
+ 	is_c2 = dev->info.cassini_version & CASSINI_2;
++	(void)is_c1;
++	(void)is_c2;
+ 
+ 	sprintf(path, "%s-csrs-%lu.bin", dev->info.device_name, time(NULL));
+ 	fd = open(path, O_CREAT | O_RDWR, 0600);
+--- a/utils/dgchs_fw.c	2026-02-03 15:20:38.000000000 +0000
++++ b/utils/dgchs_fw.c	2026-09-11 21:28:00.906851439 +0000
+@@ -111,6 +111,7 @@
+  * hms-controllers/lib/chfscommon/qdd_cdb.c.
+  */
+ #include <stdio.h>
++#include <endian.h>
+ #include <stdlib.h>
+ #include <string.h>
+ #include <time.h>

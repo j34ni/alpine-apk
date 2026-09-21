@@ -1,0 +1,28 @@
+# Maintainer: Jean Iaquinta <jeani@uio.no>
+# The CXI/RSMU UAPI headers are not exported by 'make headers_install'
+# (missing from include/uapi/misc/Kbuild), so the kernel package cannot
+# provide them; ship them from the HPE shs-cxi-driver tarball instead.
+_realname=shs-cxi-driver
+pkgname=cxi-uapi-headers
+pkgver=14.0.1
+pkgrel=0
+pkgdesc="HPE Slingshot CXI kernel UAPI headers (userspace)"
+url="https://github.com/HewlettPackard/shs-cxi-driver"
+license="GPL-2.0-or-later"
+arch="noarch"
+source="$_realname-$pkgver.tar.gz::$url/archive/refs/tags/release/shs-$pkgver.tar.gz"
+builddir="$srcdir/$_realname-release-shs-$pkgver"
+
+build() {
+	:
+}
+
+package() {
+	install -d "$pkgdir"/usr/include
+	cp -a include/uapi include/linux "$pkgdir"/usr/include/
+	install -Dm644 COPYING "$pkgdir"/usr/share/licenses/$pkgname/COPYING
+}
+
+sha512sums="
+9cf9bf3ecce1ca6787e060a43d54ce1cf1844740cfe3faa0e00953c73659c1c152dd55b84aaffc94bf240309ae17da6caf88f90490f05546a0f9725d0f3bf299  shs-cxi-driver-14.0.1.tar.gz
+"
