@@ -1,0 +1,81 @@
+# Maintainer: Jean Iaquinta <jeani@uio.no>
+pkgname=mpich
+pkgver=4.3.2
+pkgrel=0
+pkgdesc="High-quality portable implementation of the Message Passing Interface (MPI) standard"
+url="https://www.mpich.org/"
+license="LicenseRef-MPICH" # MIT-style with export/acknowledgement clauses, as on conda-forge
+arch="x86_64 aarch64"
+options="!check" # test suite is not self-contained (long-running, device-dependent)
+makedepends="
+	bison
+	curl-dev
+	flex
+	gfortran
+	hwloc-dev
+	json-c-dev
+	libcxi-dev
+	libfabric-dev
+	m4
+	perl
+	python3
+	rdma-core-dev
+	xpmem-dev
+	"
+subpackages="$pkgname-dev $pkgname-doc"
+source="https://www.mpich.org/static/downloads/$pkgver/$pkgname-$pkgver.tar.gz
+	get-elements-x-div0.patch
+	"
+
+build() {
+	# gfortran >= 10 aborts on mismatched dummy/actual args in MPICH Fortran
+	export FFLAGS="-fallow-argument-mismatch ${FFLAGS:-}"
+	export FCFLAGS="-fallow-argument-mismatch ${FCFLAGS:-}"
+
+	./configure \
+		--prefix=/usr \
+		--sysconfdir=/etc/mpich \
+		--disable-doc \
+		--disable-dependency-tracking \
+		--disable-option-checking \
+		--disable-static \
+		--enable-cxx \
+		--enable-f08 \
+		--enable-fortran=all \
+		--enable-romio \
+		--with-device=ch4:ofi \
+		--with-hwloc=/usr \
+		--with-libfabric=/usr \
+		--with-libfabric-include=/usr/include \
+		--with-libfabric-lib=/usr/lib \
+		--with-pm=hydra:gforker \
+		--with-wrapper-dl-type=none \
+		--with-dl-type=none \
+		--with-xpmem=/usr \
+		--with-xpmem-include=/usr/include \
+		--with-xpmem-lib=/usr/lib
+	make
+}
+
+package() {
+	make DESTDIR="$pkgdir" install
+	rm -f "$pkgdir"/usr/lib/*.la
+
+	install -d "$pkgdir"/usr/share/licenses/$pkgname
+	install -m 644 COPYRIGHT "$pkgdir"/usr/share/licenses/$pkgname
+}
+
+dev() {
+	default_dev
+
+	local i; for i in mpicc mpicxx mpic++ mpiCC mpifort mpif90 mpif77; do
+		if [ -e "$pkgdir"/usr/bin/$i ]; then
+			amove usr/bin/$i
+		fi
+	done
+}
+
+sha512sums="
+c02dfabaf5b9d590dba11823502f34a857dbf9752f37e6717914e8da48d3e512f40f28fb872bfafbaa972490e3c49108ae6d12d805612821e3dc7cfff86ff017  mpich-4.3.2.tar.gz
+d81ac65dea9fee2539d9ccf958b4b789991ed2ec3786ac4ffebd2f7047071ddb061466ccadc499b7f89a16295f72e327226288059c03a80c8a5424146559784f  get-elements-x-div0.patch
+"

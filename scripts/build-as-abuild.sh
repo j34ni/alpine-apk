@@ -3,7 +3,7 @@
 set -eu
 : "${WS:?}" : "${KEYS:?}" : "${CACHE:?}"
 : "${PACKAGER:=j34ni <jeani@uio.no>}"
-PKGS="cassini-headers cxi-uapi-headers libcxi xpmem libfabric"
+PKGS="cassini-headers cxi-uapi-headers libcxi xpmem libfabric mpich-4.3.2 mpich-5.0.2 osu-micro-benchmarks"
 
 CFG="$HOME/.config/abuild"
 mkdir -p "$CFG"

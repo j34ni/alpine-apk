@@ -1,0 +1,25 @@
+From: Jean Iaquinta <jeani@uio.no>
+Subject: [PATCH] MPIR_Datatype_get_elements_x(): guard divide-by-zero
+
+Guard against (type1_sz + type2_sz) == 0 for struct datatypes with mixed
+basic types before computing usable_bytes / (type1_sz + type2_sz).
+
+Backported from pmodels/mpich PR https://github.com/pmodels/mpich/pull/7202
+(merged upstream after 4.3.2 / 5.0.2rc2).
+Upstream: https://github.com/pmodels/mpich/pull/7202
+
+--- a/src/mpi/datatype/get_elements_x.c
++++ b/src/mpi/datatype/get_elements_x.c
+@@ -97,6 +97,12 @@
+     }
+ 
+     /* determine the number of elements in the region */
++    if (type1_sz + type2_sz == 0) {
++        /* this is likely a struct type with mixed basic elements. Let's just bail for now */
++        *bytes_p = 0;
++        return 0;
++    }
++
+     elements = 2 * (usable_bytes / (type1_sz + type2_sz));
+     if (usable_bytes % (type1_sz + type2_sz) >= type1_sz)
+         elements++;

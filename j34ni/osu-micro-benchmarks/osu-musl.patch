@@ -1,0 +1,60 @@
+Description: Fix musl portability of OSU benchmarks
+ .
+ - osu_util_validation.c: __intNN_t leak from glibc headers -> stdint.h types
+ - osu_util.c: strsep() on a string literal (crashes on musl) -> strdup first
+ - osu_util_mpi.c: off-by-2 heap overflow in --help path (malloc(strlen+3))
+   which corrupts the heap and aborts in free() with musl mallocng
+Origin: vendor, Jean Iaquinta <jeani@uio.no>
+Upstream-status: pending
+--- a/c/util/osu_util.c
++++ b/c/util/osu_util.c
+@@ -463,6 +463,7 @@
+     /* We just have a single value, so setting max */
+     if (0 == ccount) {
+         /* check if an exponent was provided */
++        freeme = token = strdup(val_str);
+         subtoken = strsep(&token, "^");
+         if (NULL == token) {
+             retval = set_max_message_size(atoll(subtoken));
+--- a/c/util/osu_util_validation.c
++++ b/c/util/osu_util_validation.c
+@@ -7,6 +7,7 @@
+  * For detailed copyright and licensing information, please refer to the
+  * copyright file COPYRIGHT in the top level OMB directory.
+  */
++#include <stdint.h>
+ #include <assert.h>
+ #include <stdio.h>
+ #include <stdlib.h>
+@@ -300,15 +301,15 @@
+ 
+     switch (dtype_size) {
+         case 1:
+-            return COMPARE_AS_TYPE(__int8_t, a, b);
++            return COMPARE_AS_TYPE(int8_t, a, b);
+         case 2:
+-            return COMPARE_AS_TYPE(__int16_t, a, b);
++            return COMPARE_AS_TYPE(int16_t, a, b);
+         case 4:
+-            return COMPARE_AS_TYPE(__int32_t, a, b);
++            return COMPARE_AS_TYPE(int32_t, a, b);
+         case 8:
+-            return COMPARE_AS_TYPE(__int64_t, a, b);
++            return COMPARE_AS_TYPE(int64_t, a, b);
+         case 16:
+-            return COMPARE_AS_TYPE(__int128_t, a, b);
++            return COMPARE_AS_TYPE(__int128, a, b);
+     }
+     return 0;
+ }
+--- a/c/util/osu_util_mpi.c
++++ b/c/util/osu_util_mpi.c
+@@ -307,7 +307,7 @@
+                         "OMBOP_LONG_OPTIONS_ALL and OMBOP_HELP_MSG mismatch.");
+                 }
+                 temp_long_opt =
+-                    malloc(strlen(long_options[long_itr].name) * sizeof(char));
++                    malloc((strlen(long_options[long_itr].name) + 3) * sizeof(char));
+                 OMB_CHECK_NULL_AND_EXIT(temp_long_opt,
+                                         "Unable to allocate memory");
+                 sprintf(temp_long_opt, "%s%s", "--",

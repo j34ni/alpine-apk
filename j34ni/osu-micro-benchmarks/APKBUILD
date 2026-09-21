@@ -1,0 +1,38 @@
+# Maintainer: Jean Iaquinta <jeani@uio.no>
+pkgname=osu-micro-benchmarks
+pkgver=7.5.2
+pkgrel=0
+pkgdesc="OSU Micro-Benchmarks (MPI point-to-point, collective and one-sided benchmarks)"
+url="https://mvapich.cse.ohio-state.edu/benchmarks/"
+license="BSD-3-Clause"
+arch="x86_64 aarch64"
+options="!check" # benchmarks require a provisioned MPI cluster
+makedepends="
+	gcc
+	mpich-dev
+	"
+source="
+	https://mvapich.cse.ohio-state.edu/download/mvapich/osu-micro-benchmarks-$pkgver.tar.gz
+	osu-musl.patch
+	"
+
+build() {
+	CC=mpicc CXX=mpicxx ./configure \
+		--prefix=/usr \
+		--disable-dependency-tracking \
+		--disable-static
+	make
+}
+
+package() {
+	make DESTDIR="$pkgdir" install
+	# benchmarks live under libexec; keep bin/ free of clashes
+	rm -rf "${pkgdir:?}"/usr/bin
+
+	install -Dm644 COPYRIGHT "$pkgdir"/usr/share/licenses/$pkgname/COPYRIGHT
+}
+
+sha512sums="
+07eac7a0bd44411d701f8eb560584852c2c9947688a628a671c37000a5227e4fc9eb8bd01296e2c33f0ca857f06cd56dc94bd4f2c5235277fbdc4215f803e465  osu-micro-benchmarks-7.5.2.tar.gz
+654880930174ef549915a507f69e366e4557ec5defa0bcd309cb5794dd302d774f8b9fe498a272f320ae262244ff73f90edd3076efd13f373236b353f122a239  osu-musl.patch
+"
