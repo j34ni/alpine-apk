@@ -17,10 +17,13 @@ chmod 600 "$CFG"/*.rsa
 printf 'PACKAGER_PRIVKEY="%s"\n' "$(echo "$CFG"/*.rsa)" >> "$CFG/abuild.conf"
 sudo cp "$CFG"/*.rsa.pub /etc/apk/keys/
 
-export PACKAGER DISTDIR="$CACHE"
+export PACKAGER SRCDEST="$CACHE"
+mkdir -p "$SRCDEST"
 for p in $PKGS; do
-	echo "==== BUILD $p"
 	cd "$WS/j34ni/$p"
+	echo "==== FETCH $p"
+	abuild fetch || { sleep 30; abuild fetch; } || { sleep 60; abuild fetch; }
+	echo "==== BUILD $p"
 	abuild -r -k
 done
 echo "==== PAQUETS :"
