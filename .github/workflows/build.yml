@@ -48,6 +48,26 @@ jobs:
           mkdir -p dist/edge dist/keys
           cp -r out/j34ni dist/edge/j34ni
           cp keys/*.rsa.pub dist/keys/
+          KEY=$(basename keys/*.rsa.pub)
+          {
+            echo '<!doctype html><meta charset="utf-8"><title>j34ni alpine repo</title>'
+            echo '<h1>alpine-apk (edge/x86_64)</h1>'
+            echo "<p>Install: <code>wget -O /etc/apk/keys/$KEY https://j34ni.github.io/alpine-apk/keys/$KEY</code> then <code>echo https://j34ni.github.io/alpine-apk/edge/j34ni >> /etc/apk/repositories && apk update</code></p>"
+            echo '<ul>'
+            for f in dist/edge/j34ni/x86_64/*.apk; do
+              echo "<li><a href=\"edge/j34ni/x86_64/$(basename "$f")\">$(basename "$f")</a></li>"
+            done
+            echo '</ul>'
+            echo "<p>Signing key: <a href=\"keys/$KEY\">$KEY</a></p>"
+          } > dist/index.html
+          {
+            echo '<!doctype html><meta charset="utf-8"><title>j34ni apks edge/x86_64</title>'
+            echo '<h1>Prebuilt apks (edge/x86_64)</h1><ul>'
+            for f in dist/edge/j34ni/x86_64/*.apk; do
+              echo "<li><a href=\"./$(basename "$f")\">$(basename "$f")</a></li>"
+            done
+            echo '</ul><p><a href="../../../index.html">back</a></p>'
+          } > dist/edge/j34ni/x86_64/index.html
 
       - uses: actions/upload-pages-artifact@v3
         with:
