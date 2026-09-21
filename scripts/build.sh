@@ -10,6 +10,6 @@ apk add --no-cache alpine-sdk sudo abuild git > /dev/null
 getent passwd abuild >/dev/null || adduser -D -G abuild abuild
 echo "abuild ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/abuild
 mkdir -p "$WS/out" "$CACHE"
-chown -R abuild:abuild "$WS" "$CACHE" "$KEYS"
+chown -R abuild:abuild "$WS/out" "$WS/j34ni" "$CACHE" "$KEYS"
 chmod 600 "$KEYS"/*.rsa
 su abuild -s /bin/sh -c "WS='$WS' KEYS='$KEYS' CACHE='$CACHE' sh '$WS/scripts/build-as-abuild.sh'"
