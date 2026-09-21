@@ -25,8 +25,9 @@ jobs:
           KEY_B64: ${{ secrets.ABUILD_PRIVKEY_B64 }}
         run: |
           mkdir -p keys-runner
-          printf '%s' "$KEY_B64" | base64 -d > keys-runner/priv.rsa
-          cp keys/*.rsa.pub keys-runner/priv.rsa.pub
+          PUB=$(basename keys/*.rsa.pub)
+          printf '%s' "$KEY_B64" | base64 -d > "keys-runner/${PUB%.pub}"
+          cp "keys/$PUB" "keys-runner/$PUB"
 
       - name: Cache distfiles
         uses: actions/cache@v4
