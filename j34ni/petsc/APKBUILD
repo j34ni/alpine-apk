@@ -1,0 +1,126 @@
+# Maintainer: Jean Iaquinta <jeani@uio.no>
+pkgname=petsc
+pkgver=3.25.5
+pkgrel=1
+pkgdesc="Portable, Extensible Toolkit for Scientific Computation (MPICH)" 
+url="https://petsc.org/"
+license="BSD-2-Clause"
+arch="x86_64 aarch64"
+makedepends="
+	openblas-dev
+	gfortran
+	hdf5-mpich-dev
+	metis-dev
+	mpich-dev
+	mumps-dev
+	python3
+	scotch-dev
+	scalapack-dev
+	"
+depends="python3"
+# Anything that ends up in PETSc's link line (conf/variables) must be
+# present when a consumer links against petsc-dev, e.g. LaMEM.
+depends_dev="
+	openblas-dev
+	gfortran
+	hdf5-mpich-dev
+	metis-dev
+	mpich-dev
+	mumps-dev
+	scalapack-dev
+	scotch-dev
+	"
+subpackages="$pkgname-dev"
+source="
+	petsc-$pkgver.tar.gz::https://pypi.org/packages/source/p/petsc/petsc-$pkgver.tar.gz
+	petsc_test.c
+	"
+builddir="$srcdir/petsc-$pkgver"
+
+build() {
+	export PETSC_DIR="$builddir"
+	export PETSC_ARCH=arch-linux-c-opt
+
+	export FI_PROVIDER=tcp
+
+	# petsc doesn't want us to set CFLAGS etc. directly;
+	# extend the defaults via {C,CXX,F}OPTFLAGS instead
+	export -n AR FC F90 F77 CC CXX CPP RANLIB
+	export -n CFLAGS CXXFLAGS CPPFLAGS FFLAGS LDFLAGS
+
+	python3 ./configure \
+		AR="${AR:-ar}" \
+		CC="mpicc" \
+		CXX="mpicxx" \
+		FC="mpifort" \
+		CPPFLAGS="$CPPFLAGS" \
+		LDFLAGS="$LDFLAGS" \
+		--COPTFLAGS="$CFLAGS -O3" \
+		--CXXOPTFLAGS="$CXXFLAGS -O3" \
+		--FOPTFLAGS="$FFLAGS -O3" \
+		--with-clib-autodetect=0 \
+		--with-cxxlib-autodetect=0 \
+		--with-fortranlib-autodetect=0 \
+		--with-debugging=0 \
+		--with-blas-lib=libopenblas \
+		--with-lapack-lib=libopenblas \
+		--with-hdf5=1 \
+		--with-hdf5-include=/usr/include \
+		--with-hdf5-lib="-lhdf5_hl -lhdf5 -lz -lsz" \
+		--with-metis=1 \
+		--with-metis-include=/usr/include \
+		--with-metis-lib=-lmetis \
+		--with-mpi=1 \
+		--with-mumps=1 \
+		--with-mumps-include=/usr/include \
+		--with-mumps-lib="-ldmumps -lmumps_common -lpord" \
+		--with-scotch=1 \
+		--with-scotch-include=/usr/include \
+		--with-scotch-lib="-lscotch -lscotcherr" \
+		--with-ptscotch=1 \
+		--with-ptscotch-include=/usr/include \
+		--with-ptscotch-lib="-lptscotch -lscotch -lptscotcherr -lscotcherr" \
+		--with-openmp=1 \
+		--with-pthread=1 \
+		--with-scalapack=1 \
+		--with-shared-libraries \
+		--with-ssl=0 \
+		--with-x=0 \
+		--with-scalar-type=real \
+		--prefix=/usr || (cat configure.log && return 1)
+
+	make MAKE_NP="$(nproc)"
+}
+
+check() {
+	export PETSC_DIR="$builddir"
+	export PETSC_ARCH=arch-linux-c-opt
+	cd "$builddir"
+	mpicc $CFLAGS -o "$srcdir/petsc_test" "$srcdir/petsc_test.c" \
+		-I"$builddir/include" -I"$builddir/$PETSC_ARCH/include" \
+		-L"$builddir/$PETSC_ARCH/lib" -lpetsc $LDFLAGS
+	export FI_PROVIDER=tcp
+	export LD_LIBRARY_PATH="$builddir/$PETSC_ARCH/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+	"$srcdir/petsc_test" -pc_type lu -expect_lu
+	mpiexec -n 4 "$srcdir/petsc_test" -pc_type lu -pc_factor_mat_solver_type mumps -expect_lu
+}
+
+package() {
+	# Restore env PETSc needs at install time (unset in build())
+	export PETSC_DIR="$builddir"
+	export PETSC_ARCH=arch-linux-c-opt
+	cd "$builddir"
+	make install DESTDIR="$pkgdir"
+
+	install -Dm644 LICENSE \
+		"$pkgdir"/usr/share/licenses/$pkgname/LICENSE
+}
+
+dev() {
+	default_dev
+}
+
+sha512sums="
+a0d96539171f7cd59a1c2e53fb37adc26467dbab93d3445fc56c7cffdc88f6f04c6ca9798d5117f16f28ed331f1e59dfe52b7ebb4f1c848a2c90ad70c48826da  petsc-3.25.5.tar.gz
+e4622c37e04bcec8f32ffdb6548f36e99f1f12ae5cfff8ec759b145e4fe50cd21805531ada14ed6e836db94344165e12f07226253ccdf6d67aa09cfbf1d8d7c0  petsc_test.c
+"

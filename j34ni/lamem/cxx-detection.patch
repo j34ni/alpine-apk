@@ -1,0 +1,15 @@
+Match the compiler family on 'c++' rather than 'g++', same fix as
+the conda-forge feedstock: PETSc's MPI wrapper resolves to the plain
+'c++' driver (which is GCC on Alpine), whose name does not contain
+the literal 'g++' the upstream pattern looks for.
+--- a/src/Makefile
++++ b/src/Makefile
+@@ -77,7 +77,7 @@
+ else ifeq ($(findstring icpx, $(CXX_COMPILER)), icpx)
+    LAMEM_FLAGS += -Wimplicit-fallthrough -Wno-sign-conversion \
+                   -Wno-float-conversion -Wno-deprecated-declarations -Wno-vla-cxx-extension
+-else ifeq ($(findstring g++, $(CXX_COMPILER)), g++)
++else ifeq ($(findstring c++, $(CXX_COMPILER)), c++)
+    LAMEM_FLAGS += -Wduplicated-cond -Wlogical-op -Wnull-dereference
+ else
+     $(error Unsupported compiler: $(CXX_COMPILER))

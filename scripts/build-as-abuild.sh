@@ -8,7 +8,7 @@
 set -eu
 : "${WS:?}" : "${KEYS:?}" : "${CACHE:?}"
 : "${PACKAGER:=j34ni <jeani@uio.no>}"
-PKGS="${PKGS:-cassini-headers cxi-uapi-headers libcxi xpmem libfabric openblas metis mpich-4.3.2 scotch scalapack mumps hdf5-mpich osu-micro-benchmarks}"
+PKGS="${PKGS:-cassini-headers cxi-uapi-headers libcxi xpmem libfabric openblas metis mpich-4.3.2 scotch scalapack mumps hdf5-mpich petsc lamem osu-micro-benchmarks}"
 MANIFEST="$WS/out/built-manifest.txt"
 OUT="$WS/out/j34ni/x86_64"
 

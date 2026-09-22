@@ -1,0 +1,50 @@
+# Maintainer: Jean Iaquinta <jeani@uio.no>
+pkgname=lamem
+pkgver=3.1.0
+pkgrel=0
+pkgdesc="Lithosphere and Mantle Evolution Model - a geodynamic finite difference code"
+url="https://github.com/UniMainzGeo/LaMEM"
+license="MIT"
+arch="x86_64 aarch64"
+makedepends="
+	mpich-dev
+	petsc-dev
+	"
+source="
+	$pkgname-$pkgver.tar.gz::https://github.com/UniMainzGeo/LaMEM/archive/refs/tags/v$pkgver.tar.gz
+	cxx-detection.patch
+	falling_block.dat
+	"
+builddir="$srcdir/LaMEM-$pkgver"
+
+build() {
+	export PETSC_OPT=/usr
+
+	cd "$builddir"/src
+	make mode=opt all -j"$(nproc)"
+}
+
+check() {
+	mkdir -p "$builddir"/_check
+	cp "$srcdir"/falling_block.dat "$builddir"/_check/
+	cd "$builddir"/_check
+
+	export FI_PROVIDER=tcp
+	mpiexec -n 2 "$builddir"/bin/opt/LaMEM \
+		-ParamFile falling_block.dat -nstep_max 1
+	test -f FB_multigrid.pvd
+}
+
+package() {
+	install -Dm755 "$builddir"/bin/opt/LaMEM \
+		"$pkgdir"/usr/bin/$pkgname
+
+	install -Dm644 "$builddir"/LICENSE \
+		"$pkgdir"/usr/share/licenses/$pkgname/LICENSE
+}
+
+sha512sums="
+17bacd8c10e2aad5757644f1e64bb5de3e4eef6ca10a4dbd4b68a8be6f4c23d3559ea93e8e03b72d2adb7572d4ff40fcb0ff628f0217408483f642800464c355  lamem-3.1.0.tar.gz
+	7a269d3949a2f4412104cb655d935494353bf97fbb89f9bbcd0112ec2893ce024580b653528b7673e5700dfcbc8454b3676aa08a9e62854759a4b7521329ea8d  cxx-detection.patch
+2a3f3476bfb1d248c5b1350fd213a10c4ab8f43269a1f412eef68dc6ca3af9fd1a8f2343a4123be24d77821343085aad6a7dee6f2ab9d295148f95cdfb937140  falling_block.dat
+"
