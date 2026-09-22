@@ -1,8 +1,13 @@
 # alpine-apk — personal Alpine Linux repository (j34ni)
 
 Alpine packages not (yet) available in aports, built for **Alpine edge / x86_64**.
-Current contents: HPE Slingshot (SHS) userspace stack below mpich:
-`cassini-headers`, `cxi-uapi-headers`, `libcxi`, `xpmem`, `libfabric`.
+Current contents:
+- HPE Slingshot (SHS) userspace stack: `cassini-headers`, `cxi-uapi-headers`, `libcxi`, `xpmem`, `libfabric`
+- MPI: `mpich` 4.3.2 (plus the `osu-micro-benchmarks` suite built against it)
+- Math libraries: `openblas` 0.3.34 (DYNAMIC_ARCH runtime dispatch; fixes the broken dispatch of community openblas 0.3.30-r2) with `liblapack`/`liblapacke` subpackages
+
+Builds are incremental: each push rebuilds only the packages whose APKBUILD
+fingerprint changed (`built-manifest.txt`), and publishes the full set.
 
 ## Use the repository
 

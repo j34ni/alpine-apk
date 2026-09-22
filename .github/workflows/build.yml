@@ -35,6 +35,19 @@ jobs:
           path: .distfiles
           key: distfiles-${{ hashFiles('j34ni/*/APKBUILD') }}
 
+      - name: Restore published artifacts (incremental)
+        run: |
+          BASE=https://j34ni.github.io/alpine-apk/edge/j34ni
+          mkdir -p out/j34ni/x86_64
+          if curl -fsSL "$BASE/built-manifest.txt" -o out/built-manifest.txt; then
+            cut -d' ' -f3- out/built-manifest.txt | tr ',' '\n' | grep '\.apk$' | sort -u | while read -r a; do
+              curl -fsSL "$BASE/x86_64/$a" -o "out/j34ni/x86_64/$a" || echo "miss $a (will rebuild)"
+            done
+            echo "restored $(ls out/j34ni/x86_64/*.apk 2>/dev/null | wc -l) apks"
+          else
+            echo "no published manifest: full build"
+          fi
+
       - name: Build all packages (alpine:edge, abuild)
         run: |
           mkdir -p .distfiles
@@ -47,6 +60,7 @@ jobs:
         run: |
           mkdir -p dist/edge dist/keys
           cp -r out/j34ni dist/edge/j34ni
+          cp out/built-manifest.txt dist/edge/j34ni/built-manifest.txt
           cp keys/*.rsa.pub dist/keys/
           KEY=$(basename keys/*.rsa.pub)
           {

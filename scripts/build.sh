@@ -1,6 +1,6 @@
 #!/bin/sh
-# Prepare l'environnement (root) puis delegue la compilation a l'utilisateur abuild.
-# Utilise en local (docker run ... alpine:edge sh /ws/scripts/build.sh) et par la CI GitHub.
+# Sets up the environment (root), then delegates compilation to the abuild user.
+# Used locally (docker run ... alpine:edge sh /ws/scripts/build.sh) and by GitHub CI.
 set -eu
 : "${WS:?WS manquant}"
 : "${KEYS:?KEYS manquant}"
