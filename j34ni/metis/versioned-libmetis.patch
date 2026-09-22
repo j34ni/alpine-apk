@@ -1,0 +1,12 @@
+Version libmetis so the -dev subpackage keeps an unversioned
+libmetis.so symlink pointing to the runtime package's library.
+--- a/libmetis/CMakeLists.txt
++++ b/libmetis/CMakeLists.txt
+@@ -6,6 +6,7 @@
+ 
+ # Build libmetis.
+ add_library(metis ${METIS_LIBRARY_TYPE} ${metis_sources})
++set_target_properties(metis PROPERTIES VERSION "5.2.1" SOVERSION "5")
+ 
+ if(SHARED)
+   target_link_libraries(metis GKlib)

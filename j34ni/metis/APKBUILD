@@ -1,0 +1,86 @@
+# Maintainer: Jean Iaquinta <jeani@uio.no>
+pkgname=metis
+pkgver=5.2.1
+pkgrel=0
+pkgdesc="Serial graph partitioning and fill-reducing matrix ordering library"
+url="https://github.com/KarypisLab/METIS"
+license="Apache-2.0"
+arch="x86_64 aarch64"
+makedepends="
+	cmake
+	make
+	"
+subpackages="$pkgname-dev"
+source="
+	metis-$pkgver.tar.gz::https://github.com/KarypisLab/METIS/archive/v$pkgver.tar.gz
+	gklib.tar.gz::https://github.com/KarypisLab/GKlib/archive/8bd6bad750b2b0d90800c632cf18e8ee93ad72d7.tar.gz
+	getprocvmpeak.diff
+	pr52.patch
+	no-march-native.patch
+fix-libmetis-install-paths.patch
+	cmake-3.5.patch
+	versioned-libmetis.patch
+	gklib-remove-march-and-werror-flags.patch
+	gklib-xopen-source.patch
+	gklib-remove-test-with-embedded-assembler.patch
+	"
+builddir="$srcdir/METIS-$pkgver"
+
+prepare() {
+	mkdir -p "$srcdir/METIS-$pkgver"
+	cd "$srcdir/METIS-$pkgver"
+
+	patch -p1 -i "$srcdir/getprocvmpeak.diff"
+	patch -p1 -i "$srcdir/pr52.patch"
+	patch -p1 -i "$srcdir/no-march-native.patch"
+	patch -p1 -i "$srcdir/fix-libmetis-install-paths.patch"
+	patch -p1 -i "$srcdir/cmake-3.5.patch"
+	patch -p1 -i "$srcdir/versioned-libmetis.patch"
+
+	mv "$srcdir/GKlib-8bd6bad750b2b0d90800c632cf18e8ee93ad72d7" GKlib
+	cd GKlib
+	patch -p1 -i "$srcdir/gklib-remove-march-and-werror-flags.patch"
+	patch -p1 -i "$srcdir/gklib-xopen-source.patch"
+	patch -p1 -i "$srcdir/gklib-remove-test-with-embedded-assembler.patch"
+}
+
+build() {
+	# GKlib is required by METIS (extracted as a git submodule by upstream).
+	(
+		cd GKlib
+		mkdir -p build static-libs
+		cd build
+		cmake -G "Unix Makefiles" -DCMAKE_INSTALL_PREFIX=../static-libs \
+			-DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
+			-DDEBUG=OFF -DOPENMP=set -DBUILD_SHARED_LIBS=OFF ..
+		cmake --build . --config Release
+cmake --install .
+)
+export CMAKE_GENERATOR="Unix Makefiles"
+make config shared=1 gklib_path=GKlib/static-libs prefix=/usr
+	make -j"$(nproc)"
+}
+
+package() {
+	make DESTDIR="$pkgdir" install
+
+	install -Dm644 LICENSE "$pkgdir"/usr/share/licenses/$pkgname/LICENSE
+}
+
+dev() {
+	default_dev
+}
+
+sha512sums="
+69127b7a777f9ba14cf399a7122000af9d6094a5f44be600a28384cfc0495c024fb0c6eab37c4473a5763ec1077cd9f30d9bcbb3c952462f6c9ead31c6b9e790  metis-5.2.1.tar.gz
+128cd9a48047b18b8013288162556f0b0f1d81845f5445f7cc62590ab28c06ee0a6c602cc999ce268ab27237eca3e8295df6432d377e45071946b98558872997  gklib.tar.gz
+e07333cac819d6ef6ab8f27d1fb6d2a7e0edb3f4e5f29e0a3ba67fd2ff580d44a99292e4d7fcd7df02752ccb282231ed3b6b7b3c662a929df1d67eeed41187f8  getprocvmpeak.diff
+6d20a2d20995627597f235a1a21582abad782063b40a53be8fe59cef23c3e3a48b9327895a735f382d111b2b65ac752d81088c05580bedddbacd3a9d6acea695  pr52.patch
+d3673af203feb7b5532746e53870086a7983516bb9301d18fc45484debc66078b00d1a18f3c861e81ae8d8d4d90f33faa4019d94fd70337612e240be0861de6b  no-march-native.patch
+7cbeb6f80320f58ee91bdb00171bffabc296cd251b014f80158f6a631d98d976c5825a2006602db517b663ae82e2d56cb54ac5db02192e959b92b9ac42b0f845  fix-libmetis-install-paths.patch
+	3ee0a569483e971fa29955d780fc051e10347ce59398657ce70f587da15929b86271078c0b0a6d314c81a72517102ffa5283a04b7ddc704cb02153f8c869e341  cmake-3.5.patch
+	69c91612bc6aed37b8ccaa9cfece8950b4c761820198827ec808bc82b421673235faf53cc99996dfffbc68aee50c60cc071bf3b661eb70c3dd95c3298f9cc7d9  versioned-libmetis.patch
+	558d83fedbaf7331015511ba4078c736e7a6369c06fdb1cf1915e9876886ed524baeeaa9d837c79024ff0db21856755b4089f6aaa31cf339ea122906ccb60faa  gklib-remove-march-and-werror-flags.patch
+f5efe25b7fb0640023ffafb33df020b8cb3333c846f63af5e0da317c966afb6ea233475890bb0e1db793adbbf59170e7431f1b4ed74e3df1498ab3a85ee5cdd7  gklib-xopen-source.patch
+cc1017f5b7c8211d4603a3eeaccb62f10310d4181f9930f7adf62706e892bd1f5c453b2a2280a4365a421ac40c3b93ae918c7915c2c97aa438021f23456c9e71  gklib-remove-test-with-embedded-assembler.patch
+"
