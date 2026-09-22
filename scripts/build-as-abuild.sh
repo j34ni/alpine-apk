@@ -8,7 +8,7 @@
 set -eu
 : "${WS:?}" : "${KEYS:?}" : "${CACHE:?}"
 : "${PACKAGER:=j34ni <jeani@uio.no>}"
-PKGS="${PKGS:-cassini-headers cxi-uapi-headers libcxi xpmem libfabric openblas metis mpich-4.3.2 osu-micro-benchmarks}"
+PKGS="${PKGS:-cassini-headers cxi-uapi-headers libcxi xpmem libfabric openblas metis mpich-4.3.2 scotch osu-micro-benchmarks}"
 MANIFEST="$WS/out/built-manifest.txt"
 OUT="$WS/out/j34ni/x86_64"
 
@@ -29,6 +29,15 @@ mkdir -p "$SRCDEST"
 [ -f "$MANIFEST" ] || : > "$MANIFEST"
 NEWMANIFEST="$MANIFEST.new"
 : > "$NEWMANIFEST"
+# keep manifest lines of packages not in this run's PKGS (partial runs must not
+# truncate the manifest)
+while read -r line; do
+	p2=$(printf '%s' "$line" | cut -d' ' -f2)
+	[ -n "$p2" ] || continue
+	in=0
+	for x in $PKGS; do [ "$x" = "$p2" ] && in=1; done
+	[ "$in" = 0 ] && printf '%s\n' "$line" >> "$NEWMANIFEST"
+done < "$MANIFEST"
 
 pkgbase() { ( set +u; CARCH=x86_64 CBUILD=x86_64-alpine-linux-musl CHOST=x86_64-alpine-linux-musl srcdir=/tmp pkgdir=/tmp startdir=/tmp . "$WS/j34ni/$1/APKBUILD"; printf '%s' "${pkgname:-}"; ); }
 

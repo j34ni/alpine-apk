@@ -40,6 +40,7 @@ jobs:
           BASE=https://j34ni.github.io/alpine-apk/edge/j34ni
           mkdir -p out/j34ni/x86_64
           if curl -fsSL "$BASE/built-manifest.txt" -o out/built-manifest.txt; then
+            curl -fsSL "$BASE/x86_64/APKINDEX.tar.gz" -o "out/j34ni/x86_64/APKINDEX.tar.gz" || echo "miss APKINDEX"
             cut -d' ' -f3- out/built-manifest.txt | tr ',' '\n' | grep '\.apk$' | sort -u | while read -r a; do
               curl -fsSL "$BASE/x86_64/$a" -o "out/j34ni/x86_64/$a" || echo "miss $a (will rebuild)"
             done

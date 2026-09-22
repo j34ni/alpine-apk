@@ -1,0 +1,63 @@
+# Maintainer: Jean Iaquinta <jeani@uio.no>
+pkgname=scotch
+pkgver=7.0.11
+pkgrel=0
+pkgdesc="Graph and mesh partitioning library (serial and MPI-based PT-Scotch)"
+url="https://gitlab.inria.fr/scotch/scotch"
+license="CECILL-C"
+arch="x86_64 aarch64"
+makedepends="
+	bzip2-dev
+	cmake
+	gfortran
+	mpich-dev
+	xz-dev
+	zlib-dev
+	"
+subpackages="$pkgname-dev"
+source="
+	scotch-v$pkgver.tar.gz::https://gitlab.inria.fr/scotch/scotch/-/archive/v$pkgver/scotch-v$pkgver.tar.gz
+	0002-fix-ptesmumps.h.patch
+	"
+builddir="$srcdir/scotch-v$pkgver"
+
+prepare() {
+	default_prepare
+}
+
+build() {
+	mkdir -p build
+	cmake -B build -G "Unix Makefiles" \
+		-DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
+		-DBUILD_LIBSCOTCHMETIS=OFF \
+		-DBUILD_SHARED_LIBS=ON \
+		-DCMAKE_BUILD_TYPE=Release \
+		-DCMAKE_INSTALL_LIBDIR=lib \
+		-DCMAKE_INSTALL_PREFIX=/usr \
+		-DENABLE_TESTS=OFF \
+		-DINTSIZE=32 \
+		-DMPI_DETERMINE_Fortran_CAPABILITIES=OFF \
+		-DMPI_DETERMINE_LIBRARY_VERSION=OFF \
+		-DSCOTCH_PATCHLEVEL=${pkgver##*.} \
+		-DSCOTCH_RELEASE=${pkgver%.*} \
+		-DSCOTCH_VERSION=${pkgver%%.*} \
+		.
+	cmake --build build -j"$(nproc)"
+}
+
+package() {
+	DESTDIR="$pkgdir" cmake --install build
+	find "$pkgdir"/usr/share/man -name '*.[0-8]' -type f -exec gzip -9 {} +
+
+	install -Dm644 doc/CeCILL-C_V1-en.txt \
+		"$pkgdir"/usr/share/licenses/$pkgname/CECILL-C
+}
+
+dev() {
+	default_dev
+}
+
+sha512sums="
+37a1b57c705b24d25080d00173055ed1b50eabe03808741ec8b48bea82ccf256a80961e22e1081387854aa7665786906f24815f242c3c8e8551a70bc4c21f27c  scotch-v7.0.11.tar.gz
+8dbc0d91b85802f2c8786ef4a8ed7d998f120a6f09e2c1fd45e7e993a66f5a91ccef7d70ae6b54a7613d18a7e03f08ff3daef63eb461edd87f49b401ef524635  0002-fix-ptesmumps.h.patch
+"
