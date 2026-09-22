@@ -1,0 +1,12 @@
+Version libscalapack so the -dev subpackage keeps an unversioned
+libscalapack.so symlink pointing to the runtime package's library.
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -233,6 +233,7 @@
+ if (UNIX)
+    add_library(scalapack ${blacs} ${tools} ${tools-C} ${extra_lapack} ${pblas} ${pblas-F} ${ptzblas} ${ptools} ${pbblas} ${redist} ${src} ${src-C})
+    target_link_libraries( scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES})
++   set_target_properties(scalapack PROPERTIES VERSION "2.2.0" SOVERSION "2")
+    scalapack_install_library(scalapack)
+ else (UNIX) # Need to separate Fortran and C Code
+    OPTION(BUILD_SHARED_LIBS "Build shared libraries" ON )

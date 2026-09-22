@@ -1,0 +1,62 @@
+# Maintainer: Jean Iaquinta <jeani@uio.no>
+pkgname=scalapack
+pkgver=2.2.0
+pkgrel=0
+pkgdesc="Highly scalable linear algebra library for distributed-memory message-passing computers"
+url="https://www.netlib.org/scalapack/"
+license="BSD-2-Clause"
+arch="x86_64 aarch64"
+makedepends="
+	cmake
+	gfortran
+	mpich-dev
+	openblas-dev
+	"
+subpackages="$pkgname-dev"
+source="
+	https://www.netlib.org/scalapack/scalapack-$pkgver.tgz
+	high_mem_32bits.patch
+	versioned-libscalapack.patch
+	"
+
+prepare() {
+	default_prepare
+}
+
+build() {
+	# MPI libraries are not correctly linked by the CMake scripts upstream,
+	# so use the MPI compiler wrappers.
+	export CC=mpicc
+	export CXX=mpic++
+	export FC=mpifort
+	export FFLAGS="$FFLAGS -fallow-argument-mismatch"
+	export CFLAGS="$CFLAGS -std=gnu17 -Wno-error=implicit-function-declaration"
+	# BLACS INSTALL sub-configure runs through execute_process() and inherits
+	# the environment, not the -D flags passed to the top-level cmake.
+	export CMAKE_POLICY_VERSION_MINIMUM=3.5
+	export CMAKE_GENERATOR="Unix Makefiles"
+
+	mkdir -p build
+	cd build
+	cmake -G "Unix Makefiles" \
+		-DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
+		-DBLAS_LIBRARIES="-lopenblas" \
+		-DLAPACK_LIBRARIES="-lopenblas" \
+		-DBUILD_SHARED_LIBS=ON \
+		-DCMAKE_BUILD_TYPE=Release \
+		-DCMAKE_INSTALL_LIBDIR=lib \
+		-DCMAKE_INSTALL_PREFIX=/usr \
+		..
+	make
+}
+
+package() {
+	make -C build DESTDIR="$pkgdir" install
+	install -Dm644 LICENSE "$pkgdir"/usr/share/licenses/$pkgname/LICENSE
+}
+
+sha512sums="
+1e6c69a4faab8165c273479ff8b63e98df6a7253cffc524b5700d0344c3f89c52c5bccc5d3a9a9bded4d9da50080123abd8340b75e1f92317e471c4375704999  scalapack-2.2.0.tgz
+62b0a8837789233fb288842db7c6e48fd48c090d09689a942305559f4dda9403d95ab67d94ab75f9084d93cd906d7db4c36fb6dfaa26c1fc196ef0b0a444c059  high_mem_32bits.patch
+2298888f861601074a3e964008b3b841535667e6f36719c5c65df0355f63627bb2b712b875e61f4a47bbc8e51ac3b8b4dd132b1ae1b1d3beee623ecbd6f1ba2e  versioned-libscalapack.patch
+"

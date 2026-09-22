@@ -1,0 +1,617 @@
+diff --git a/REDIST/SRC/pcgemr.c b/REDIST/SRC/pcgemr.c
+index bd6de2f..d3a1482 100644
+--- a/REDIST/SRC/pcgemr.c
++++ b/REDIST/SRC/pcgemr.c
+@@ -342,7 +342,7 @@ Cpcgemr2d(m, n,
+   assert((myprow1 < p1 && mypcol1 < q1) || (myprow1 == -1 && mypcol1 == -1));
+   /* exchange the missing parameters among the processors: shape of grids and
+    * location of the processors */
+-  param = (Int *) mr2d_malloc(3 * (nprocs * 2 + NBPARAM) * sizeof(Int));
++  param = (Int *) mr2d_malloc(3 * ((size_t)nprocs * 2 + NBPARAM) * sizeof(Int));
+   ra = param + nprocs * 2 + NBPARAM;
+   ca = param + (nprocs * 2 + NBPARAM) * 2;
+   for (i = 0; i < nprocs * 2 + NBPARAM; i++)
+@@ -467,10 +467,10 @@ Cpcgemr2d(m, n,
+   /* allocing room for the tabs, alloc for the worst case,local_n or local_m
+    * intervals, in fact the worst case should be less, perhaps half that,I
+    * should think of that one day. */
+-  h_inter = (IDESC *) mr2d_malloc(DIVUP(ma->n, q0 * ma->nbcol) *
+-				  ma->nbcol * sizeof(IDESC));
+-  v_inter = (IDESC *) mr2d_malloc(DIVUP(ma->m, p0 * ma->nbrow)
+-				  * ma->nbrow * sizeof(IDESC));
++  h_inter = (IDESC *) mr2d_malloc((size_t)(DIVUP(ma->n, q0 * ma->nbcol)) *
++				  (size_t)ma->nbcol * sizeof(IDESC));
++  v_inter = (IDESC *) mr2d_malloc((size_t)(DIVUP(ma->m, p0 * ma->nbrow))
++				  * (size_t)ma->nbrow * sizeof(IDESC));
+   /* We go for the scanning of indices. For each processor including mypnum,
+    * we fill the sendbuff buffer (scanD0(SENDBUFF)) and when it is done send
+    * it. Then for each processor, we compute the size of message to be
+@@ -570,7 +570,7 @@ init_chenille(Int mypnum, Int nprocs, Int n0, Int *proc0, Int n1, Int *proc1, In
+   Int   ns, nr, i, tot;
+   Int  *sender, *recver, *g0, *g1;
+   tot = max(n0, n1);
+-  sender = (Int *) mr2d_malloc((nprocs + tot) * sizeof(Int) * 2);
++  sender = (Int *) mr2d_malloc((size_t)(nprocs + tot) * sizeof(Int) * 2);
+   recver = sender + tot;
+   *psend = sender;
+   *precv = recver;
+@@ -706,7 +706,7 @@ gridreshape(Int *ctxtp)
+   Int   i, j;
+   ori = *ctxtp;
+   Cblacs_gridinfo(ori, &nprow, &npcol, &myrow, &mycol);
+-  usermap = mr2d_malloc(sizeof(Int) * nprow * npcol);
++  usermap = mr2d_malloc(sizeof(Int) * (size_t)nprow * (size_t)npcol);
+   for (i = 0; i < nprow; i++)
+     for (j = 0; j < npcol; j++) {
+       usermap[i + j * nprow] = Cblacs_pnum(ori, i, j);
+diff --git a/REDIST/SRC/pcgemr2.c b/REDIST/SRC/pcgemr2.c
+index ce5370d..c6b20c8 100644
+--- a/REDIST/SRC/pcgemr2.c
++++ b/REDIST/SRC/pcgemr2.c
+@@ -121,7 +121,7 @@ setmemory(complex **adpointer, Int blocksize)
+     return;
+   }
+   *adpointer = (complex *) mr2d_malloc(
+-				       blocksize * sizeof(complex));
++				       (size_t)blocksize * sizeof(complex));
+ }
+ /******************************************************************/
+ /* Free the memory space after the malloc */
+diff --git a/REDIST/SRC/pctrmr.c b/REDIST/SRC/pctrmr.c
+index 0122528..1516690 100644
+--- a/REDIST/SRC/pctrmr.c
++++ b/REDIST/SRC/pctrmr.c
+@@ -359,7 +359,7 @@ Cpctrmr2d(uplo, diag, m, n,
+   assert((myprow1 < p1 && mypcol1 < q1) || (myprow1 == -1 && mypcol1 == -1));
+   /* exchange the missing parameters among the processors: shape of grids and
+    * location of the processors */
+-  param = (Int *) mr2d_malloc(3 * (nprocs * 2 + NBPARAM) * sizeof(Int));
++  param = (Int *) mr2d_malloc(3 * ((size_t)nprocs * 2 + NBPARAM) * sizeof(Int));
+   ra = param + nprocs * 2 + NBPARAM;
+   ca = param + (nprocs * 2 + NBPARAM) * 2;
+   for (i = 0; i < nprocs * 2 + NBPARAM; i++)
+@@ -484,10 +484,10 @@ Cpctrmr2d(uplo, diag, m, n,
+   /* allocing room for the tabs, alloc for the worst case,local_n or local_m
+    * intervals, in fact the worst case should be less, perhaps half that,I
+    * should think of that one day. */
+-  h_inter = (IDESC *) mr2d_malloc(DIVUP(ma->n, q0 * ma->nbcol) *
+-				  ma->nbcol * sizeof(IDESC));
+-  v_inter = (IDESC *) mr2d_malloc(DIVUP(ma->m, p0 * ma->nbrow)
+-				  * ma->nbrow * sizeof(IDESC));
++  h_inter = (IDESC *) mr2d_malloc((size_t)(DIVUP(ma->n, q0 * ma->nbcol)) *
++				  (size_t)ma->nbcol * sizeof(IDESC));
++  v_inter = (IDESC *) mr2d_malloc((size_t)(DIVUP(ma->m, p0 * ma->nbrow))
++				  * (size_t)ma->nbrow * sizeof(IDESC));
+   /* We go for the scanning of indices. For each processor including mypnum,
+    * we fill the sendbuff buffer (scanD0(SENDBUFF)) and when it is done send
+    * it. Then for each processor, we compute the size of message to be
+@@ -592,7 +592,7 @@ init_chenille(Int mypnum, Int nprocs, Int n0, Int *proc0, Int n1, Int *proc1, In
+   Int   ns, nr, i, tot;
+   Int  *sender, *recver, *g0, *g1;
+   tot = max(n0, n1);
+-  sender = (Int *) mr2d_malloc((nprocs + tot) * sizeof(Int) * 2);
++  sender = (Int *) mr2d_malloc((size_t)(nprocs + tot) * sizeof(Int) * 2);
+   recver = sender + tot;
+   *psend = sender;
+   *precv = recver;
+@@ -664,7 +664,7 @@ gridreshape(Int *ctxtp)
+   Int   i, j;
+   ori = *ctxtp;
+   Cblacs_gridinfo(ori, &nprow, &npcol, &myrow, &mycol);
+-  usermap = mr2d_malloc(sizeof(Int) * nprow * npcol);
++  usermap = mr2d_malloc(sizeof(Int) * (size_t)nprow * (size_t)npcol);
+   for (i = 0; i < nprow; i++)
+     for (j = 0; j < npcol; j++) {
+       usermap[i + j * nprow] = Cblacs_pnum(ori, i, j);
+diff --git a/REDIST/SRC/pctrmr2.c b/REDIST/SRC/pctrmr2.c
+index 99e34f9..0e6d04b 100644
+--- a/REDIST/SRC/pctrmr2.c
++++ b/REDIST/SRC/pctrmr2.c
+@@ -121,7 +121,7 @@ setmemory(complex **adpointer, Int blocksize)
+     return;
+   }
+   *adpointer = (complex *) mr2d_malloc(
+-				       blocksize * sizeof(complex));
++				       (size_t)blocksize * sizeof(complex));
+ }
+ /******************************************************************/
+ /* Free the memory space after the malloc */
+diff --git a/REDIST/SRC/pdgemr.c b/REDIST/SRC/pdgemr.c
+index 706d7b2..2cc2d01 100644
+--- a/REDIST/SRC/pdgemr.c
++++ b/REDIST/SRC/pdgemr.c
+@@ -339,7 +339,7 @@ Cpdgemr2d(m, n,
+   assert((myprow1 < p1 && mypcol1 < q1) || (myprow1 == -1 && mypcol1 == -1));
+   /* exchange the missing parameters among the processors: shape of grids and
+    * location of the processors */
+-  param = (Int *) mr2d_malloc(3 * (nprocs * 2 + NBPARAM) * sizeof(Int));
++  param = (Int *) mr2d_malloc(3 * ((size_t)nprocs * 2 + NBPARAM) * sizeof(Int));
+   ra = param + nprocs * 2 + NBPARAM;
+   ca = param + (nprocs * 2 + NBPARAM) * 2;
+   for (i = 0; i < nprocs * 2 + NBPARAM; i++)
+@@ -464,10 +464,10 @@ Cpdgemr2d(m, n,
+   /* allocing room for the tabs, alloc for the worst case,local_n or local_m
+    * intervals, in fact the worst case should be less, perhaps half that,I
+    * should think of that one day. */
+-  h_inter = (IDESC *) mr2d_malloc(DIVUP(ma->n, q0 * ma->nbcol) *
+-				  ma->nbcol * sizeof(IDESC));
+-  v_inter = (IDESC *) mr2d_malloc(DIVUP(ma->m, p0 * ma->nbrow)
+-				  * ma->nbrow * sizeof(IDESC));
++  h_inter = (IDESC *) mr2d_malloc((size_t)(DIVUP(ma->n, q0 * ma->nbcol)) *
++				  (size_t)ma->nbcol * sizeof(IDESC));
++  v_inter = (IDESC *) mr2d_malloc((size_t)(DIVUP(ma->m, p0 * ma->nbrow))
++				  * (size_t)ma->nbrow * sizeof(IDESC));
+   /* We go for the scanning of indices. For each processor including mypnum,
+    * we fill the sendbuff buffer (scanD0(SENDBUFF)) and when it is done send
+    * it. Then for each processor, we compute the size of message to be
+@@ -569,7 +569,7 @@ init_chenille(mypnum, nprocs, n0, proc0, n1, proc1, psend, precv, myrang)
+   Int   ns, nr, i, tot;
+   Int  *sender, *recver, *g0, *g1;
+   tot = max(n0, n1);
+-  sender = (Int *) mr2d_malloc((nprocs + tot) * sizeof(Int) * 2);
++  sender = (Int *) mr2d_malloc((size_t)(nprocs + tot) * sizeof(Int) * 2);
+   recver = sender + tot;
+   *psend = sender;
+   *precv = recver;
+@@ -713,7 +713,7 @@ gridreshape(Int *ctxtp)
+   Int   i, j;
+   ori = *ctxtp;
+   Cblacs_gridinfo(ori, &nprow, &npcol, &myrow, &mycol);
+-  usermap = mr2d_malloc(sizeof(Int) * nprow * npcol);
++  usermap = mr2d_malloc(sizeof(Int) * (size_t)nprow * (size_t)npcol);
+   for (i = 0; i < nprow; i++)
+     for (j = 0; j < npcol; j++) {
+       usermap[i + j * nprow] = Cblacs_pnum(ori, i, j);
+diff --git a/REDIST/SRC/pdgemr2.c b/REDIST/SRC/pdgemr2.c
+index b6498cf..a030570 100644
+--- a/REDIST/SRC/pdgemr2.c
++++ b/REDIST/SRC/pdgemr2.c
+@@ -118,7 +118,7 @@ setmemory(double **adpointer, Int blocksize)
+     return;
+   }
+   *adpointer = (double *) mr2d_malloc(
+-				      blocksize * sizeof(double));
++				      (size_t)blocksize * sizeof(double));
+ }
+ /******************************************************************/
+ /* Free the memory space after the malloc */
+diff --git a/REDIST/SRC/pdtrmr.c b/REDIST/SRC/pdtrmr.c
+index 7cf8d01..7381652 100644
+--- a/REDIST/SRC/pdtrmr.c
++++ b/REDIST/SRC/pdtrmr.c
+@@ -356,7 +356,7 @@ Cpdtrmr2d(uplo, diag, m, n,
+   assert((myprow1 < p1 && mypcol1 < q1) || (myprow1 == -1 && mypcol1 == -1));
+   /* exchange the missing parameters among the processors: shape of grids and
+    * location of the processors */
+-  param = (Int *) mr2d_malloc(3 * (nprocs * 2 + NBPARAM) * sizeof(Int));
++  param = (Int *) mr2d_malloc(3 * ((size_t)nprocs * 2 + NBPARAM) * sizeof(Int));
+   ra = param + nprocs * 2 + NBPARAM;
+   ca = param + (nprocs * 2 + NBPARAM) * 2;
+   for (i = 0; i < nprocs * 2 + NBPARAM; i++)
+@@ -481,10 +481,10 @@ Cpdtrmr2d(uplo, diag, m, n,
+   /* allocing room for the tabs, alloc for the worst case,local_n or local_m
+    * intervals, in fact the worst case should be less, perhaps half that,I
+    * should think of that one day. */
+-  h_inter = (IDESC *) mr2d_malloc(DIVUP(ma->n, q0 * ma->nbcol) *
+-				  ma->nbcol * sizeof(IDESC));
+-  v_inter = (IDESC *) mr2d_malloc(DIVUP(ma->m, p0 * ma->nbrow)
+-				  * ma->nbrow * sizeof(IDESC));
++  h_inter = (IDESC *) mr2d_malloc((size_t)(DIVUP(ma->n, q0 * ma->nbcol)) *
++				  (size_t)ma->nbcol * sizeof(IDESC));
++  v_inter = (IDESC *) mr2d_malloc((size_t)(DIVUP(ma->m, p0 * ma->nbrow))
++				  * (size_t)ma->nbrow * sizeof(IDESC));
+   /* We go for the scanning of indices. For each processor including mypnum,
+    * we fill the sendbuff buffer (scanD0(SENDBUFF)) and when it is done send
+    * it. Then for each processor, we compute the size of message to be
+@@ -589,7 +589,7 @@ init_chenille(Int mypnum, Int nprocs, Int n0, Int *proc0, Int n1, Int *proc1, In
+   Int   ns, nr, i, tot;
+   Int  *sender, *recver, *g0, *g1;
+   tot = max(n0, n1);
+-  sender = (Int *) mr2d_malloc((nprocs + tot) * sizeof(Int) * 2);
++  sender = (Int *) mr2d_malloc((size_t)(nprocs + tot) * sizeof(Int) * 2);
+   recver = sender + tot;
+   *psend = sender;
+   *precv = recver;
+@@ -661,7 +661,7 @@ gridreshape(Int *ctxtp)
+   Int   i, j;
+   ori = *ctxtp;
+   Cblacs_gridinfo(ori, &nprow, &npcol, &myrow, &mycol);
+-  usermap = mr2d_malloc(sizeof(Int) * nprow * npcol);
++  usermap = mr2d_malloc(sizeof(Int) * (size_t)nprow * (size_t)npcol);
+   for (i = 0; i < nprow; i++)
+     for (j = 0; j < npcol; j++) {
+       usermap[i + j * nprow] = Cblacs_pnum(ori, i, j);
+diff --git a/REDIST/SRC/pdtrmr2.c b/REDIST/SRC/pdtrmr2.c
+index 65e970f..c35085f 100644
+--- a/REDIST/SRC/pdtrmr2.c
++++ b/REDIST/SRC/pdtrmr2.c
+@@ -118,7 +118,7 @@ setmemory(double **adpointer, Int blocksize)
+     return;
+   }
+   *adpointer = (double *) mr2d_malloc(
+-				      blocksize * sizeof(double));
++				      (size_t)blocksize * sizeof(double));
+ }
+ /******************************************************************/
+ /* Free the memory space after the malloc */
+diff --git a/REDIST/SRC/pgemraux.c b/REDIST/SRC/pgemraux.c
+index 17dc301..404af7a 100644
+--- a/REDIST/SRC/pgemraux.c
++++ b/REDIST/SRC/pgemraux.c
+@@ -104,11 +104,12 @@ extern void Cpigemr2d();
+ #include <stdio.h>
+ #include <stdlib.h>
+ #include <assert.h>
++const size_t NEGFLAG = ~( ((size_t)-1) >> 1);
+ void *
+-mr2d_malloc(Int n)
++mr2d_malloc(size_t n)
+ {
+   void *ptr;
+-  assert(n > 0);
++  assert((n & NEGFLAG) == 0);
+   ptr = (void *) malloc(n);
+   if (ptr == NULL) {
+     fprintf(stderr, "xxmr2d:out of memory\n");
+diff --git a/REDIST/SRC/pigemr.c b/REDIST/SRC/pigemr.c
+index e9e0f99..ddcaf57 100644
+--- a/REDIST/SRC/pigemr.c
++++ b/REDIST/SRC/pigemr.c
+@@ -339,7 +339,7 @@ Cpigemr2d(m, n,
+   assert((myprow1 < p1 && mypcol1 < q1) || (myprow1 == -1 && mypcol1 == -1));
+   /* exchange the missing parameters among the processors: shape of grids and
+    * location of the processors */
+-  param = (Int *) mr2d_malloc(3 * (nprocs * 2 + NBPARAM) * sizeof(Int));
++  param = (Int *) mr2d_malloc(3 * ((size_t)nprocs * 2 + NBPARAM) * sizeof(Int));
+   ra = param + nprocs * 2 + NBPARAM;
+   ca = param + (nprocs * 2 + NBPARAM) * 2;
+   for (i = 0; i < nprocs * 2 + NBPARAM; i++)
+@@ -464,10 +464,10 @@ Cpigemr2d(m, n,
+   /* allocing room for the tabs, alloc for the worst case,local_n or local_m
+    * intervals, in fact the worst case should be less, perhaps half that,I
+    * should think of that one day. */
+-  h_inter = (IDESC *) mr2d_malloc(DIVUP(ma->n, q0 * ma->nbcol) *
+-				  ma->nbcol * sizeof(IDESC));
+-  v_inter = (IDESC *) mr2d_malloc(DIVUP(ma->m, p0 * ma->nbrow)
+-				  * ma->nbrow * sizeof(IDESC));
++  h_inter = (IDESC *) mr2d_malloc((size_t)(DIVUP(ma->n, q0 * ma->nbcol)) *
++				  (size_t)ma->nbcol * sizeof(IDESC));
++  v_inter = (IDESC *) mr2d_malloc((size_t)(DIVUP(ma->m, p0 * ma->nbrow))
++				  * (size_t)ma->nbrow * sizeof(IDESC));
+   /* We go for the scanning of indices. For each processor including mypnum,
+    * we fill the sendbuff buffer (scanD0(SENDBUFF)) and when it is done send
+    * it. Then for each processor, we compute the size of message to be
+@@ -567,7 +567,7 @@ init_chenille(Int mypnum, Int nprocs, Int n0, Int *proc0, Int n1, Int *proc1, In
+   Int   ns, nr, i, tot;
+   Int  *sender, *recver, *g0, *g1;
+   tot = max(n0, n1);
+-  sender = (Int *) mr2d_malloc((nprocs + tot) * sizeof(Int) * 2);
++  sender = (Int *) mr2d_malloc((size_t)(nprocs + tot) * sizeof(Int) * 2);
+   recver = sender + tot;
+   *psend = sender;
+   *precv = recver;
+@@ -703,7 +703,7 @@ gridreshape(Int *ctxtp)
+   Int   i, j;
+   ori = *ctxtp;
+   Cblacs_gridinfo(ori, &nprow, &npcol, &myrow, &mycol);
+-  usermap = mr2d_malloc(sizeof(Int) * nprow * npcol);
++  usermap = mr2d_malloc(sizeof(Int) * (size_t)nprow * (size_t)npcol);
+   for (i = 0; i < nprow; i++)
+     for (j = 0; j < npcol; j++) {
+       usermap[i + j * nprow] = Cblacs_pnum(ori, i, j);
+diff --git a/REDIST/SRC/pigemr2.c b/REDIST/SRC/pigemr2.c
+index 0e6d11d..4d3f9f9 100644
+--- a/REDIST/SRC/pigemr2.c
++++ b/REDIST/SRC/pigemr2.c
+@@ -118,7 +118,7 @@ setmemory(Int **adpointer, Int blocksize)
+     return;
+   }
+   *adpointer = (Int *) mr2d_malloc(
+-				   blocksize * sizeof(Int));
++				   (size_t)blocksize * sizeof(Int));
+ }
+ /******************************************************************/
+ /* Free the memory space after the malloc */
+diff --git a/REDIST/SRC/pitrmr.c b/REDIST/SRC/pitrmr.c
+index 043c37f..65acaf0 100644
+--- a/REDIST/SRC/pitrmr.c
++++ b/REDIST/SRC/pitrmr.c
+@@ -356,7 +356,7 @@ Cpitrmr2d(uplo, diag, m, n,
+   assert((myprow1 < p1 && mypcol1 < q1) || (myprow1 == -1 && mypcol1 == -1));
+   /* exchange the missing parameters among the processors: shape of grids and
+    * location of the processors */
+-  param = (Int *) mr2d_malloc(3 * (nprocs * 2 + NBPARAM) * sizeof(Int));
++  param = (Int *) mr2d_malloc(3 * ((size_t)nprocs * 2 + NBPARAM) * sizeof(Int));
+   ra = param + nprocs * 2 + NBPARAM;
+   ca = param + (nprocs * 2 + NBPARAM) * 2;
+   for (i = 0; i < nprocs * 2 + NBPARAM; i++)
+@@ -481,10 +481,10 @@ Cpitrmr2d(uplo, diag, m, n,
+   /* allocing room for the tabs, alloc for the worst case,local_n or local_m
+    * intervals, in fact the worst case should be less, perhaps half that,I
+    * should think of that one day. */
+-  h_inter = (IDESC *) mr2d_malloc(DIVUP(ma->n, q0 * ma->nbcol) *
+-				  ma->nbcol * sizeof(IDESC));
+-  v_inter = (IDESC *) mr2d_malloc(DIVUP(ma->m, p0 * ma->nbrow)
+-				  * ma->nbrow * sizeof(IDESC));
++  h_inter = (IDESC *) mr2d_malloc((size_t)(DIVUP(ma->n, q0 * ma->nbcol)) *
++				  (size_t)(ma->nbcol) * sizeof(IDESC));
++  v_inter = (IDESC *) mr2d_malloc((size_t)(DIVUP(ma->m, p0 * ma->nbrow))
++				  * (size_t)ma->nbrow * sizeof(IDESC));
+   /* We go for the scanning of indices. For each processor including mypnum,
+    * we fill the sendbuff buffer (scanD0(SENDBUFF)) and when it is done send
+    * it. Then for each processor, we compute the size of message to be
+@@ -589,7 +589,7 @@ init_chenille(Int mypnum, Int nprocs, Int n0, Int *proc0, Int n1, Int *proc1, In
+   Int   ns, nr, i, tot;
+   Int  *sender, *recver, *g0, *g1;
+   tot = max(n0, n1);
+-  sender = (Int *) mr2d_malloc((nprocs + tot) * sizeof(Int) * 2);
++  sender = (Int *) mr2d_malloc((size_t)(nprocs + tot) * sizeof(Int) * 2);
+   recver = sender + tot;
+   *psend = sender;
+   *precv = recver;
+@@ -661,7 +661,7 @@ gridreshape(Int *ctxtp)
+   Int   i, j;
+   ori = *ctxtp;
+   Cblacs_gridinfo(ori, &nprow, &npcol, &myrow, &mycol);
+-  usermap = mr2d_malloc(sizeof(Int) * nprow * npcol);
++  usermap = mr2d_malloc(sizeof(Int) * (size_t)nprow * (size_t)npcol);
+   for (i = 0; i < nprow; i++)
+     for (j = 0; j < npcol; j++) {
+       usermap[i + j * nprow] = Cblacs_pnum(ori, i, j);
+diff --git a/REDIST/SRC/pitrmr2.c b/REDIST/SRC/pitrmr2.c
+index a86f207..ac36cfc 100644
+--- a/REDIST/SRC/pitrmr2.c
++++ b/REDIST/SRC/pitrmr2.c
+@@ -118,7 +118,7 @@ setmemory(Int **adpointer, Int blocksize)
+     return;
+   }
+   *adpointer = (Int *) mr2d_malloc(
+-				   blocksize * sizeof(Int));
++				   (size_t)blocksize * sizeof(Int));
+ }
+ /******************************************************************/
+ /* Free the memory space after the malloc */
+diff --git a/REDIST/SRC/psgemr.c b/REDIST/SRC/psgemr.c
+index 6e053bf..4e12e70 100644
+--- a/REDIST/SRC/psgemr.c
++++ b/REDIST/SRC/psgemr.c
+@@ -339,7 +339,7 @@ Cpsgemr2d(m, n,
+   assert((myprow1 < p1 && mypcol1 < q1) || (myprow1 == -1 && mypcol1 == -1));
+   /* exchange the missing parameters among the processors: shape of grids and
+    * location of the processors */
+-  param = (Int *) mr2d_malloc(3 * (nprocs * 2 + NBPARAM) * sizeof(Int));
++  param = (Int *) mr2d_malloc(3 * ((size_t)nprocs * 2 + NBPARAM) * sizeof(Int));
+   ra = param + nprocs * 2 + NBPARAM;
+   ca = param + (nprocs * 2 + NBPARAM) * 2;
+   for (i = 0; i < nprocs * 2 + NBPARAM; i++)
+@@ -464,10 +464,10 @@ Cpsgemr2d(m, n,
+   /* allocing room for the tabs, alloc for the worst case,local_n or local_m
+    * intervals, in fact the worst case should be less, perhaps half that,I
+    * should think of that one day. */
+-  h_inter = (IDESC *) mr2d_malloc(DIVUP(ma->n, q0 * ma->nbcol) *
+-				  ma->nbcol * sizeof(IDESC));
+-  v_inter = (IDESC *) mr2d_malloc(DIVUP(ma->m, p0 * ma->nbrow)
+-				  * ma->nbrow * sizeof(IDESC));
++  h_inter = (IDESC *) mr2d_malloc((size_t)(DIVUP(ma->n, q0 * ma->nbcol)) *
++				  (size_t)ma->nbcol * sizeof(IDESC));
++  v_inter = (IDESC *) mr2d_malloc((size_t)(DIVUP(ma->m, p0 * ma->nbrow))
++				  * (size_t)ma->nbrow * sizeof(IDESC));
+   /* We go for the scanning of indices. For each processor including mypnum,
+    * we fill the sendbuff buffer (scanD0(SENDBUFF)) and when it is done send
+    * it. Then for each processor, we compute the size of message to be
+@@ -567,7 +567,7 @@ init_chenille(Int mypnum, Int nprocs, Int n0, Int *proc0, Int n1, Int *proc1, In
+   Int   ns, nr, i, tot;
+   Int  *sender, *recver, *g0, *g1;
+   tot = max(n0, n1);
+-  sender = (Int *) mr2d_malloc((nprocs + tot) * sizeof(Int) * 2);
++  sender = (Int *) mr2d_malloc((size_t)(nprocs + tot) * sizeof(Int) * 2);
+   recver = sender + tot;
+   *psend = sender;
+   *precv = recver;
+@@ -703,7 +703,7 @@ gridreshape(Int *ctxtp)
+   Int   i, j;
+   ori = *ctxtp;
+   Cblacs_gridinfo(ori, &nprow, &npcol, &myrow, &mycol);
+-  usermap = mr2d_malloc(sizeof(Int) * nprow * npcol);
++  usermap = mr2d_malloc(sizeof(Int) * (size_t)nprow * (size_t)npcol);
+   for (i = 0; i < nprow; i++)
+     for (j = 0; j < npcol; j++) {
+       usermap[i + j * nprow] = Cblacs_pnum(ori, i, j);
+diff --git a/REDIST/SRC/psgemr2.c b/REDIST/SRC/psgemr2.c
+index 07b3568..55442db 100644
+--- a/REDIST/SRC/psgemr2.c
++++ b/REDIST/SRC/psgemr2.c
+@@ -118,7 +118,7 @@ setmemory(float **adpointer, Int blocksize)
+     return;
+   }
+   *adpointer = (float *) mr2d_malloc(
+-				     blocksize * sizeof(float));
++				     (size_t)blocksize * sizeof(float));
+ }
+ /******************************************************************/
+ /* Free the memory space after the malloc */
+diff --git a/REDIST/SRC/pstrmr.c b/REDIST/SRC/pstrmr.c
+index e63b93f..89ed468 100644
+--- a/REDIST/SRC/pstrmr.c
++++ b/REDIST/SRC/pstrmr.c
+@@ -350,7 +350,7 @@ Cpstrmr2d(char *uplo, char *diag, Int m, Int n,
+   assert((myprow1 < p1 && mypcol1 < q1) || (myprow1 == -1 && mypcol1 == -1));
+   /* exchange the missing parameters among the processors: shape of grids and
+    * location of the processors */
+-  param = (Int *) mr2d_malloc(3 * (nprocs * 2 + NBPARAM) * sizeof(Int));
++  param = (Int *) mr2d_malloc(3 * ((size_t)nprocs * 2 + NBPARAM) * sizeof(Int));
+   ra = param + nprocs * 2 + NBPARAM;
+   ca = param + (nprocs * 2 + NBPARAM) * 2;
+   for (i = 0; i < nprocs * 2 + NBPARAM; i++)
+@@ -475,10 +475,10 @@ Cpstrmr2d(char *uplo, char *diag, Int m, Int n,
+   /* allocing room for the tabs, alloc for the worst case,local_n or local_m
+    * intervals, in fact the worst case should be less, perhaps half that,I
+    * should think of that one day. */
+-  h_inter = (IDESC *) mr2d_malloc(DIVUP(ma->n, q0 * ma->nbcol) *
+-				  ma->nbcol * sizeof(IDESC));
+-  v_inter = (IDESC *) mr2d_malloc(DIVUP(ma->m, p0 * ma->nbrow)
+-				  * ma->nbrow * sizeof(IDESC));
++  h_inter = (IDESC *) mr2d_malloc((size_t)(DIVUP(ma->n, q0 * ma->nbcol)) *
++				  (size_t)ma->nbcol * sizeof(IDESC));
++  v_inter = (IDESC *) mr2d_malloc((size_t)(DIVUP(ma->m, p0 * ma->nbrow))
++				  * (size_t)ma->nbrow * sizeof(IDESC));
+   /* We go for the scanning of indices. For each processor including mypnum,
+    * we fill the sendbuff buffer (scanD0(SENDBUFF)) and when it is done send
+    * it. Then for each processor, we compute the size of message to be
+@@ -583,7 +583,7 @@ init_chenille(Int mypnum, Int nprocs, Int n0, Int *proc0, Int n1, Int *proc1, In
+   Int   ns, nr, i, tot;
+   Int  *sender, *recver, *g0, *g1;
+   tot = max(n0, n1);
+-  sender = (Int *) mr2d_malloc((nprocs + tot) * sizeof(Int) * 2);
++  sender = (Int *) mr2d_malloc((size_t)(nprocs + tot) * sizeof(Int) * 2);
+   recver = sender + tot;
+   *psend = sender;
+   *precv = recver;
+@@ -655,7 +655,7 @@ gridreshape(Int *ctxtp)
+   Int   i, j;
+   ori = *ctxtp;
+   Cblacs_gridinfo(ori, &nprow, &npcol, &myrow, &mycol);
+-  usermap = mr2d_malloc(sizeof(Int) * nprow * npcol);
++  usermap = mr2d_malloc(sizeof(Int) * (size_t)nprow * (size_t)npcol);
+   for (i = 0; i < nprow; i++)
+     for (j = 0; j < npcol; j++) {
+       usermap[i + j * nprow] = Cblacs_pnum(ori, i, j);
+diff --git a/REDIST/SRC/pstrmr2.c b/REDIST/SRC/pstrmr2.c
+index dcec2b5..7b59761 100644
+--- a/REDIST/SRC/pstrmr2.c
++++ b/REDIST/SRC/pstrmr2.c
+@@ -118,7 +118,7 @@ setmemory(float **adpointer, Int blocksize)
+     return;
+   }
+   *adpointer = (float *) mr2d_malloc(
+-				     blocksize * sizeof(float));
++				     (size_t)blocksize * sizeof(float));
+ }
+ /******************************************************************/
+ /* Free the memory space after the malloc */
+diff --git a/REDIST/SRC/pzgemr.c b/REDIST/SRC/pzgemr.c
+index 4b2f014..6047599 100644
+--- a/REDIST/SRC/pzgemr.c
++++ b/REDIST/SRC/pzgemr.c
+@@ -342,7 +342,7 @@ Cpzgemr2d(m, n,
+   assert((myprow1 < p1 && mypcol1 < q1) || (myprow1 == -1 && mypcol1 == -1));
+   /* exchange the missing parameters among the processors: shape of grids and
+    * location of the processors */
+-  param = (Int *) mr2d_malloc(3 * (nprocs * 2 + NBPARAM) * sizeof(Int));
++  param = (Int *) mr2d_malloc(3 * ((size_t)nprocs * 2 + NBPARAM) * sizeof(Int));
+   ra = param + nprocs * 2 + NBPARAM;
+   ca = param + (nprocs * 2 + NBPARAM) * 2;
+   for (i = 0; i < nprocs * 2 + NBPARAM; i++)
+@@ -467,10 +467,10 @@ Cpzgemr2d(m, n,
+   /* allocing room for the tabs, alloc for the worst case,local_n or local_m
+    * intervals, in fact the worst case should be less, perhaps half that,I
+    * should think of that one day. */
+-  h_inter = (IDESC *) mr2d_malloc(DIVUP(ma->n, q0 * ma->nbcol) *
+-				  ma->nbcol * sizeof(IDESC));
+-  v_inter = (IDESC *) mr2d_malloc(DIVUP(ma->m, p0 * ma->nbrow)
+-				  * ma->nbrow * sizeof(IDESC));
++  h_inter = (IDESC *) mr2d_malloc((size_t)(DIVUP(ma->n, q0 * ma->nbcol)) *
++				  (size_t)ma->nbcol * sizeof(IDESC));
++  v_inter = (IDESC *) mr2d_malloc((size_t)(DIVUP(ma->m, p0 * ma->nbrow))
++				  * (size_t)ma->nbrow * sizeof(IDESC));
+   /* We go for the scanning of indices. For each processor including mypnum,
+    * we fill the sendbuff buffer (scanD0(SENDBUFF)) and when it is done send
+    * it. Then for each processor, we compute the size of message to be
+@@ -570,7 +570,7 @@ init_chenille(Int mypnum, Int nprocs, Int n0, Int *proc0, Int n1, Int *proc1, In
+   Int   ns, nr, i, tot;
+   Int  *sender, *recver, *g0, *g1;
+   tot = max(n0, n1);
+-  sender = (Int *) mr2d_malloc((nprocs + tot) * sizeof(Int) * 2);
++  sender = (Int *) mr2d_malloc((size_t)(nprocs + tot) * sizeof(Int) * 2);
+   recver = sender + tot;
+   *psend = sender;
+   *precv = recver;
+@@ -706,7 +706,7 @@ gridreshape(Int *ctxtp)
+   Int   i, j;
+   ori = *ctxtp;
+   Cblacs_gridinfo(ori, &nprow, &npcol, &myrow, &mycol);
+-  usermap = mr2d_malloc(sizeof(Int) * nprow * npcol);
++  usermap = mr2d_malloc(sizeof(Int) * (size_t)nprow * (size_t)npcol);
+   for (i = 0; i < nprow; i++)
+     for (j = 0; j < npcol; j++) {
+       usermap[i + j * nprow] = Cblacs_pnum(ori, i, j);
+diff --git a/REDIST/SRC/pzgemr2.c b/REDIST/SRC/pzgemr2.c
+index 979748e..862fdff 100644
+--- a/REDIST/SRC/pzgemr2.c
++++ b/REDIST/SRC/pzgemr2.c
+@@ -121,7 +121,7 @@ setmemory(dcomplex **adpointer, Int blocksize)
+     return;
+   }
+   *adpointer = (dcomplex *) mr2d_malloc(
+-					blocksize * sizeof(dcomplex));
++					(size_t)blocksize * sizeof(dcomplex));
+ }
+ /******************************************************************/
+ /* Free the memory space after the malloc */
+diff --git a/REDIST/SRC/pztrmr.c b/REDIST/SRC/pztrmr.c
+index 2de759a..a0c18d8 100644
+--- a/REDIST/SRC/pztrmr.c
++++ b/REDIST/SRC/pztrmr.c
+@@ -341,6 +341,7 @@ Cpztrmr2d(uplo, diag, m, n,
+   Cblacs_gridinfo(globcontext, &nprow, &npcol, &dummy, &mypnum);
+   gcontext = globcontext;
+   nprocs = nprow * npcol;
++  assert (nprocs > 0);
+   /* if the global context that is given to us has not the shape of a line
+    * (nprow != 1), create a new context.  TODO: to be optimal, we should
+    * avoid this because it is an uncessary synchronisation */
+@@ -359,7 +360,7 @@ Cpztrmr2d(uplo, diag, m, n,
+   assert((myprow1 < p1 && mypcol1 < q1) || (myprow1 == -1 && mypcol1 == -1));
+   /* exchange the missing parameters among the processors: shape of grids and
+    * location of the processors */
+-  param = (Int *) mr2d_malloc(3 * (nprocs * 2 + NBPARAM) * sizeof(Int));
++  param = (Int *) mr2d_malloc(3 * ((size_t)nprocs * 2 + NBPARAM) * sizeof(Int));
+   ra = param + nprocs * 2 + NBPARAM;
+   ca = param + (nprocs * 2 + NBPARAM) * 2;
+   for (i = 0; i < nprocs * 2 + NBPARAM; i++)
+@@ -484,10 +485,10 @@ Cpztrmr2d(uplo, diag, m, n,
+   /* allocing room for the tabs, alloc for the worst case,local_n or local_m
+    * intervals, in fact the worst case should be less, perhaps half that,I
+    * should think of that one day. */
+-  h_inter = (IDESC *) mr2d_malloc(DIVUP(ma->n, q0 * ma->nbcol) *
+-				  ma->nbcol * sizeof(IDESC));
+-  v_inter = (IDESC *) mr2d_malloc(DIVUP(ma->m, p0 * ma->nbrow)
+-				  * ma->nbrow * sizeof(IDESC));
++  h_inter = (IDESC *) mr2d_malloc((size_t)(DIVUP(ma->n, q0 * ma->nbcol)) *
++				  (size_t)ma->nbcol * sizeof(IDESC));
++  v_inter = (IDESC *) mr2d_malloc((size_t)(DIVUP(ma->m, p0 * ma->nbrow))
++				  * (size_t)ma->nbrow * sizeof(IDESC));
+   /* We go for the scanning of indices. For each processor including mypnum,
+    * we fill the sendbuff buffer (scanD0(SENDBUFF)) and when it is done send
+    * it. Then for each processor, we compute the size of message to be
+@@ -592,7 +593,7 @@ init_chenille(Int mypnum, Int nprocs, Int n0, Int *proc0, Int n1, Int *proc1, In
+   Int   ns, nr, i, tot;
+   Int  *sender, *recver, *g0, *g1;
+   tot = max(n0, n1);
+-  sender = (Int *) mr2d_malloc((nprocs + tot) * sizeof(Int) * 2);
++  sender = (Int *) mr2d_malloc((size_t)(nprocs + tot) * sizeof(Int) * 2);
+   recver = sender + tot;
+   *psend = sender;
+   *precv = recver;
+@@ -664,7 +665,7 @@ gridreshape(Int *ctxtp)
+   Int   i, j;
+   ori = *ctxtp;
+   Cblacs_gridinfo(ori, &nprow, &npcol, &myrow, &mycol);
+-  usermap = mr2d_malloc(sizeof(Int) * nprow * npcol);
++  usermap = mr2d_malloc(sizeof(Int) * (size_t)nprow * (size_t)npcol);
+   for (i = 0; i < nprow; i++)
+     for (j = 0; j < npcol; j++) {
+       usermap[i + j * nprow] = Cblacs_pnum(ori, i, j);
+diff --git a/REDIST/SRC/pztrmr2.c b/REDIST/SRC/pztrmr2.c
+index c75abce..29f2290 100644
+--- a/REDIST/SRC/pztrmr2.c
++++ b/REDIST/SRC/pztrmr2.c
+@@ -121,7 +121,7 @@ setmemory(dcomplex **adpointer, Int blocksize)
+     return;
+   }
+   *adpointer = (dcomplex *) mr2d_malloc(
+-					blocksize * sizeof(dcomplex));
++					(size_t) blocksize * sizeof(dcomplex));
+ }
+ /******************************************************************/
+ /* Free the memory space after the malloc */
