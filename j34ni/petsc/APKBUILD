@@ -1,7 +1,7 @@
 # Maintainer: Jean Iaquinta <jeani@uio.no>
 pkgname=petsc
 pkgver=3.25.5
-pkgrel=1
+pkgrel=2
 pkgdesc="Portable, Extensible Toolkit for Scientific Computation (MPICH)" 
 url="https://petsc.org/"
 license="BSD-2-Clause"
@@ -17,7 +17,10 @@ makedepends="
 	scotch-dev
 	scalapack-dev
 	"
-depends="python3"
+# Named hdf5-mpich deps, not just the auto so:libhdf5.so.320: community's
+# serial 'hdf5' provides the same soname but lacks the MPI-IO entry points
+# (H5Pset_fapl_mpio), which breaks libpetsc at load time.
+depends="python3 hdf5-mpich hdf5-mpich-hl"
 # Anything that ends up in PETSc's link line (conf/variables) must be
 # present when a consumer links against petsc-dev, e.g. LaMEM.
 depends_dev="
