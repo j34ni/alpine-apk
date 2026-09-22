@@ -30,7 +30,7 @@ mkdir -p "$SRCDEST"
 NEWMANIFEST="$MANIFEST.new"
 : > "$NEWMANIFEST"
 
-pkgbase() { ( CARCH=x86_64 CBUILD=x86_64-alpine-linux-musl CHOST=x86_64-alpine-linux-musl . "$WS/j34ni/$1/APKBUILD"; printf '%s' "$pkgname"; ); }
+pkgbase() { ( set +u; CARCH=x86_64 CBUILD=x86_64-alpine-linux-musl CHOST=x86_64-alpine-linux-musl srcdir=/tmp pkgdir=/tmp startdir=/tmp . "$WS/j34ni/$1/APKBUILD"; printf '%s' "${pkgname:-}"; ); }
 
 fingerprint() {
 	{
@@ -67,12 +67,12 @@ for p in $PKGS; do
 	[ -n "$old" ] && rm -f $OUT/$old
 	rm -rf "$WS/j34ni/$p/src" "$WS/j34ni/$p/pkg" "$WS/j34ni/$p/.abuild"
 	cd "$WS/j34ni/$p"
-	touch "$WS/.build-marker"
+	touch "$WS/out/.build-marker"
 	echo "==== FETCH $p"
 	abuild fetch || { sleep 30; abuild fetch; } || { sleep 60; abuild fetch; }
 	echo "==== BUILD $p"
 	abuild -r
-	built=$(cd "$OUT" && find . -name '*.apk' -newer "$WS/.build-marker" | sed 's|^\./||' | sort | paste -sd,)
+	built=$(cd "$OUT" && find . -name '*.apk' -newer "$WS/out/.build-marker" | sed 's|^\./||' | sort | paste -sd,)
 	echo "$fp $p $built" >> "$NEWMANIFEST"
 done
 mv "$NEWMANIFEST" "$MANIFEST"
