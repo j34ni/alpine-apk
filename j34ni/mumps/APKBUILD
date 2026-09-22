@@ -15,6 +15,10 @@ makedepends="
 	scotch-dev
 	"
 subpackages="$pkgname-dev"
+# lib/*.so are installed unversioned, so default_dev() moves no symlink into
+# -dev and abuild adds no automatic runtime dependency; declare it explicitly
+# (consumers like PETSc link -ldmumps -lmumps_common -lpord and need the libs).
+depends_dev="mumps=$pkgver-r$pkgrel"
 source="
 	MUMPS_$pkgver.tar.gz::https://mumps-solver.org/MUMPS_$pkgver.tar.gz
 	Makefile.inc
