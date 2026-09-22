@@ -1,7 +1,7 @@
 # Maintainer: Jean Iaquinta <jeani@uio.no>
 pkgname=mumps
 pkgver=5.7.3
-pkgrel=0
+pkgrel=1
 pkgdesc="MUltifrontal Massively Parallel sparse direct Solver (MPICH, PT-Scotch+METIS ordering)"
 url="https://mumps-solver.org"
 license="CECILL-C"
@@ -63,7 +63,7 @@ dev() {
 			Description: The parallel ${prec}-precision MUMPS library
 			Version: $pkgver
 			Cflags: -I\${includedir}
-			Libs: -L\${libdir} -l${prec}mumps
+			Libs: -L\${libdir} -l${prec}mumps -lmumps_common -lpord
 		EOF
 	done
 }

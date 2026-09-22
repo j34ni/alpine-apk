@@ -1,0 +1,99 @@
+# Maintainer: Jean Iaquinta <jeani@uio.no>
+#
+# HDF5 depends on zlib and provides a C interface by default.
+# Optional bindings: C++ and Fortran.
+# This variant is built with parallel I/O support using MPICH,
+# with the shared library name libhdf5.so (replaces serial hdf5).
+
+pkgname=hdf5-mpich
+pkgver=2.2.0
+pkgrel=0
+pkgdesc="HDF5 data model, library, and file format (MPICH parallel)"
+url="https://www.hdfgroup.org/solutions/hdf5/"
+arch="all"
+license="HDF5"
+replaces="hdf5"
+depends_dev="libaec-dev zlib-dev hdf5-mpich-static=$pkgver-r$pkgrel"
+makedepends="cmake gfortran mpich-dev perl $depends_dev"
+checkdepends="diffutils"
+options="!check"
+subpackages="
+	$pkgname-tools
+	$pkgname-fortran
+	$pkgname-hl
+	$pkgname-hl-fortran:hl_fortran
+	$pkgname-static
+	$pkgname-doc
+	$pkgname-dev
+	"
+source="hdf5-$pkgver.tar.gz::https://github.com/HDFGroup/hdf5/archive/refs/tags/$pkgver.tar.gz
+	"
+builddir="$srcdir/hdf5-$pkgver"
+
+build() {
+	if [ "$CBUILD" != "$CHOST" ]; then
+		crossopts="-DCMAKE_SYSTEM_NAME=Linux -DCMAKE_HOST_SYSTEM_NAME=Linux"
+	fi
+
+	cmake -B build -G "Unix Makefiles" \
+		-DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
+		-DCMAKE_INSTALL_PREFIX=/usr \
+		-DCMAKE_INSTALL_LIBDIR=lib \
+		-DBUILD_SHARED_LIBS=ON \
+		-DCMAKE_BUILD_TYPE=None \
+		-Wno-dev \
+		-DHDF5_USE_GNU_DIRS=ON \
+		-DBUILD_STATIC_LIBS=ON \
+		-DHDF5_ENABLE_PARALLEL=ON \
+		-DMPI_C_ADDITIONAL_INCLUDE_DIRS=/usr/include \
+		-DHDF5_BUILD_CPP_LIB=OFF \
+		-DHDF5_BUILD_HL_LIB=ON \
+		-DHDF5_BUILD_FORTRAN=ON \
+		-DHDF5_ENABLE_ZLIB_SUPPORT=ON \
+		-DHDF5_ENABLE_SZIP_SUPPORT=ON \
+		-DHDF5_ENABLE_SZIP_ENCODING=ON \
+		-DHDF5_INSTALL_CMAKE_DIR=lib/cmake/hdf5 \
+		$crossopts
+
+	cmake --build build
+}
+
+package() {
+	DESTDIR="$pkgdir" cmake --install build
+}
+
+tools() {
+	pkgdesc="Runtime tools for HDF5 library (MPICH parallel)"
+	amove usr/bin/*
+	amove usr/lib/libhdf5_tools.so.*
+}
+
+fortran() {
+	pkgdesc="Fortran runtime files for HDF5 library (MPICH parallel)"
+	amove usr/lib/libhdf5_fortran.so.*
+}
+
+hl() {
+	pkgdesc="High Level C API runtime files for HDF5 library (MPICH parallel)"
+	amove usr/lib/libhdf5_hl.so.*
+}
+
+hl_fortran() {
+	pkgdesc="High Level Fortran runtime files for HDF5 library (MPICH parallel)"
+	amove usr/lib/libhdf5_hl_fortran.so.*
+}
+
+doc() {
+	default_doc
+	amove usr/share/LICENSE
+	mv "$subpkgdir"/usr/share/LICENSE "$subpkgdir"/usr/share/HDF5
+}
+
+dev() {
+	default_dev
+	amove usr/lib/libhdf5.settings
+}
+
+sha512sums="
+b009572b70eba02fa0963119f202da202cdcf20a3b4c01a94c5618e8b612033c0b8dc23664ccb0c2a2ebbdab427ad96ba8163ff8eb0356bb093617d37a9932f8  hdf5-2.2.0.tar.gz
+"
