@@ -3,7 +3,7 @@
 set -eu
 : "${WS:?}" : "${KEYS:?}" : "${CACHE:?}"
 : "${PACKAGER:=j34ni <jeani@uio.no>}"
-PKGS="cassini-headers cxi-uapi-headers libcxi xpmem libfabric mpich-4.3.2 osu-micro-benchmarks"
+PKGS="${PKGS:-cassini-headers cxi-uapi-headers libcxi xpmem libfabric openblas mpich-4.3.2 osu-micro-benchmarks}"
 
 CFG="$HOME/.config/abuild"
 mkdir -p "$CFG"
@@ -24,7 +24,8 @@ for p in $PKGS; do
 	echo "==== FETCH $p"
 	abuild fetch || { sleep 30; abuild fetch; } || { sleep 60; abuild fetch; }
 	echo "==== BUILD $p"
-	abuild -r -k
+	rm -rf "$WS/j34ni/$p/src" "$WS/j34ni/$p/pkg" "$WS/j34ni/$p/.abuild"
+	abuild -r
 done
 echo "==== PAQUETS :"
 find "$WS/out" -name '*.apk' | sort

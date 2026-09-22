@@ -1,0 +1,89 @@
+# Maintainer: Jean Iaquinta <jeani@uio.no>
+pkgname=openblas
+_pkgname=OpenBLAS
+pkgver=0.3.34
+pkgrel=0
+pkgdesc="fast BSD-licensed BLAS with runtime CPU dispatch (upstream build)"
+url="https://www.openblas.net/"
+arch="all"
+license="BSD-3-Clause"
+makedepends="gfortran perl"
+subpackages="
+	$pkgname-dev
+	liblapack
+	liblapacke
+	"
+source="$_pkgname-$pkgver.tar.gz::https://github.com/OpenMathLib/OpenBLAS/archive/refs/tags/v$pkgver.tar.gz"
+builddir="$srcdir/$_pkgname-$pkgver"
+
+# USE_OPENMP=0: see GCC bug 60035
+# NO_AFFINITY: don't expect to work on musl
+# NO_STATIC: massive and not used
+# NUM_THREADS: match kernel's CONFIG_NR_CPUS
+_flags="
+	MAJOR_VERSION=3
+	NO_AFFINITY=1
+	NO_STATIC=1
+	USE_OPENMP=0
+	PREFIX=/usr
+	"
+case "$CARCH" in
+*64|s390x) _flags="$_flags NUM_THREADS=256" ;;
+*)         _flags="$_flags NUM_THREADS=8" ;;
+esac
+
+case "$CARCH" in
+x86*)
+	# DYNAMIC_ARCH only supported on x86*, and it is the whole point of
+	# this package: runtime kernel selection (the community 0.3.30-r2
+	# build ships a broken dispatch: "Architecture Initialization
+	# failed" at runtime -> scalar fallback).
+	_flags="$_flags DYNAMIC_ARCH=1 TARGET=CORE2"
+	;;
+aarch64)
+	_flags="$_flags DYNAMIC_ARCH=0 TARGET=ARMV8"
+	;;
+arm*)
+	_flags="$_flags DYNAMIC_ARCH=0 TARGET=ARMV7"
+	;;
+*)
+	_flags="$_flags DYNAMIC_ARCH=0"
+	;;
+esac
+
+build() {
+	# OpenBLAS is performance-critical; Alpine's -Os base is inappropriate.
+	export CFLAGS=${CFLAGS/-Os/-O2}
+	make $_flags CFLAGS="$CFLAGS"
+}
+
+package() {
+	make $_flags DESTDIR="$pkgdir" install
+
+	# LAPACK/LAPACKE live inside libopenblas; expose the traditional
+	# sonames so consumers linking -llapack keep working.
+	ln -sf libopenblas.so.3 "$pkgdir"/usr/lib/liblapack.so.3
+	ln -sf liblapack.so.3   "$pkgdir"/usr/lib/liblapack.so
+	ln -sf libopenblas.so.3 "$pkgdir"/usr/lib/liblapacke.so.3
+	ln -sf liblapacke.so.3  "$pkgdir"/usr/lib/liblapacke.so
+
+	install -Dm644 LICENSE -t "$pkgdir"/usr/share/licenses/$pkgname/
+}
+
+liblapack() {
+	pkgdesc="$pkgdesc (LAPACK library)"
+	depends="!lapack"
+	arch="noarch"
+	amove usr/lib/liblapack.so.*
+}
+
+liblapacke() {
+	pkgdesc="$pkgdesc (LAPACKE library)"
+	depends="!lapack"
+	arch="noarch"
+	amove usr/lib/liblapacke.so.*
+}
+
+sha512sums="
+b40b5a3b5062ea196b3e48363db584ef91aef21c61becf4f4d6616ba5e413d770c22445c357d06dcf0992dd4666c18cced44cd5d09d8cb884c0d8f62e6940422  OpenBLAS-0.3.34.tar.gz
+"
