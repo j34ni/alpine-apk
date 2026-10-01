@@ -1,7 +1,7 @@
 # Maintainer: Jean Iaquinta <jeani@uio.no>
 pkgname=mpich
 pkgver=4.3.2
-pkgrel=0
+pkgrel=1
 pkgdesc="High-quality portable implementation of the Message Passing Interface (MPI) standard"
 url="https://www.mpich.org/"
 license="LicenseRef-MPICH" # MIT-style with export/acknowledgement clauses, as on conda-forge
@@ -25,6 +25,7 @@ makedepends="
 subpackages="$pkgname-dev $pkgname-doc"
 source="https://www.mpich.org/static/downloads/$pkgver/$pkgname-$pkgver.tar.gz
 	get-elements-x-div0.patch
+	ofi-pipeline-deferred-am-hdr-sz.patch
 	"
 
 build() {
@@ -78,4 +79,5 @@ dev() {
 sha512sums="
 c02dfabaf5b9d590dba11823502f34a857dbf9752f37e6717914e8da48d3e512f40f28fb872bfafbaa972490e3c49108ae6d12d805612821e3dc7cfff86ff017  mpich-4.3.2.tar.gz
 d81ac65dea9fee2539d9ccf958b4b789991ed2ec3786ac4ffebd2f7047071ddb061466ccadc499b7f89a16295f72e327226288059c03a80c8a5424146559784f  get-elements-x-div0.patch
+6cd0509833b4135148f2008bfdfe59e73f30cd616de9f7e4ded864ff867f98eaacc57c47c002fd5a2a2c2c646749ef82716132cf034cfd3bc946762ddd2bd98c  ofi-pipeline-deferred-am-hdr-sz.patch
 "
