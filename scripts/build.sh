@@ -12,4 +12,4 @@ echo "abuild ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/abuild
 mkdir -p "$WS/out" "$CACHE"
 chown -R abuild:abuild "$WS/out" "$WS/j34ni" "$CACHE" "$KEYS"
 chmod 600 "$KEYS"/*.rsa
-su abuild -s /bin/sh -c "WS='$WS' KEYS='$KEYS' CACHE='$CACHE' sh '$WS/scripts/build-as-abuild.sh'"
+su abuild -s /bin/sh -c "WS='$WS' KEYS='$KEYS' CACHE='$CACHE' PKGS='${PKGS:-}' sh '$WS/scripts/build-as-abuild.sh'"
