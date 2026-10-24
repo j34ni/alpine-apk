@@ -1,0 +1,14 @@
+LaMEM gates the build on 'uname -m' against a fixed allow-list; riscv64 is
+missing although nothing in the Makefile uses PLATFORM beyond the check and
+an 'info' echo (compiler family is detected separately). Add riscv64.
+--- a/src/Makefile
++++ b/src/Makefile
+@@ -45,7 +45,7 @@
+ PLATFORM = $(shell uname -m)
+ 
+ # check if platform is supported
+-ifneq ($(findstring $(PLATFORM), x86_64 arm64 aarch64 armv6l armv7l i686 powerpc64le amd64), $(PLATFORM))
++ifneq ($(findstring $(PLATFORM), x86_64 arm64 aarch64 armv6l armv7l i686 powerpc64le amd64 riscv64), $(PLATFORM))
+    $(error Unsupported platform)
+ endif
+ 
