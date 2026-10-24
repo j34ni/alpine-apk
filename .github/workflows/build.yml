@@ -16,9 +16,24 @@ concurrency:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: x86_64
+            runner: ubuntu-latest
+          # RISE project: free hosted RISC-V runners for open source.
+          # One-time setup: install the GitHub App (riseproject-dev/riscv-runner).
+          # Native riscv64 hardware with Docker; alpine:edge runs natively.
+          - arch: riscv64
+            runner: ubuntu-24.04-riscv
+    runs-on: ${{ matrix.runner }}
     steps:
       - uses: actions/checkout@v4
+
+      - name: Docker preflight (workspace must be bind-mountable)
+        run: |
+          docker run --rm -v "$PWD:/w" alpine:edge test -f /w/README.md
 
       - name: Restore signing key
         env:
@@ -33,63 +48,85 @@ jobs:
         uses: actions/cache@v4
         with:
           path: .distfiles
-          key: distfiles-${{ hashFiles('j34ni/*/APKBUILD') }}
+          key: distfiles-${{ matrix.arch }}-${{ hashFiles('j34ni/*/APKBUILD') }}
 
       - name: Restore published artifacts (incremental)
         run: |
           BASE=https://j34ni.github.io/alpine-apk/edge/j34ni
-          mkdir -p out/j34ni/x86_64
-          if curl -fsSL "$BASE/built-manifest.txt" -o out/built-manifest.txt; then
-            curl -fsSL "$BASE/x86_64/APKINDEX.tar.gz" -o "out/j34ni/x86_64/APKINDEX.tar.gz" || echo "miss APKINDEX"
-            cut -d' ' -f3- out/built-manifest.txt | tr ',' '\n' | grep '\.apk$' | sort -u | while read -r a; do
-              curl -fsSL "$BASE/x86_64/$a" -o "out/j34ni/x86_64/$a" || echo "miss $a (will rebuild)"
+          ARCH=${{ matrix.arch }}
+          mkdir -p "out/j34ni/$ARCH"
+          if curl -fsSL "$BASE/built-manifest-$ARCH.txt" -o "out/built-manifest-$ARCH.txt"; then
+            curl -fsSL "$BASE/$ARCH/APKINDEX.tar.gz" -o "out/j34ni/$ARCH/APKINDEX.tar.gz" || echo "miss APKINDEX"
+            cut -d' ' -f3- "out/built-manifest-$ARCH.txt" | tr ',' '\n' | grep '\.apk$' | sort -u | while read -r a; do
+              curl -fsSL "$BASE/$ARCH/$a" -o "out/j34ni/$ARCH/$a" || echo "miss $a (will rebuild)"
             done
-            echo "restored $(ls out/j34ni/x86_64/*.apk 2>/dev/null | wc -l) apks"
+            echo "restored $(ls out/j34ni/$ARCH/*.apk 2>/dev/null | wc -l) apks"
           else
             echo "no published manifest: full build"
           fi
 
-      - name: Build all packages (alpine:edge, abuild)
+      - name: Build all packages (alpine:edge, abuild, native arch)
         run: |
           mkdir -p .distfiles
           docker run --rm \
-            -e WS=/ws -e KEYS=/keys -e CACHE=/cache \
+            -e WS=/ws -e KEYS=/keys -e CACHE=/cache -e ARCH=${{ matrix.arch }} \
             -v "$PWD:/ws" -v "$PWD/keys-runner:/keys" -v "$PWD/.distfiles:/cache" \
             alpine:edge sh /ws/scripts/build.sh
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: repo-${{ matrix.arch }}
+          path: out
+
+  assemble:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: repo-*
+          path: parts
+          merge-multiple: true
 
       - name: Assemble Pages site
         run: |
           mkdir -p dist/edge dist/keys
-          cp -r out/j34ni dist/edge/j34ni
-          cp out/built-manifest.txt dist/edge/j34ni/built-manifest.txt
+          cp -r parts/j34ni dist/edge/j34ni
+          cp parts/built-manifest-*.txt dist/edge/j34ni/
           cp keys/*.rsa.pub dist/keys/
           KEY=$(basename keys/*.rsa.pub)
           {
             echo '<!doctype html><meta charset="utf-8"><title>j34ni alpine repo</title>'
-            echo '<h1>alpine-apk (edge/x86_64)</h1>'
-            echo "<p>Install: <code>wget -O /etc/apk/keys/$KEY https://j34ni.github.io/alpine-apk/keys/$KEY</code> then <code>echo https://j34ni.github.io/alpine-apk/edge/j34ni >> /etc/apk/repositories && apk update</code></p>"
-            echo '<ul>'
-            for f in dist/edge/j34ni/x86_64/*.apk; do
-              echo "<li><a href=\"edge/j34ni/x86_64/$(basename "$f")\">$(basename "$f")</a></li>"
+            echo '<h1>alpine-apk (edge: x86_64 + riscv64)</h1>'
+            echo "<p>Install: <code>wget -O /etc/apk/keys/$KEY https://j34ni.github.io/alpine-apk/keys/$KEY</code> then <code>echo https://j34ni.github.io/alpine-apk/edge/j34ni >> /etc/apk/repositories && apk update</code> (same repo line for x86_64 and riscv64)</p>"
+            for d in dist/edge/j34ni/*/; do
+              A=$(basename "$d")
+              [ -f "$d/APKINDEX.tar.gz" ] || continue
+              echo "<h2><a href=\"$A/index.html\">$A ($(ls "$d"/*.apk | wc -l) apks)</a></h2>"
             done
-            echo '</ul>'
             echo "<p>Signing key: <a href=\"keys/$KEY\">$KEY</a></p>"
           } > dist/index.html
-          {
-            echo '<!doctype html><meta charset="utf-8"><title>j34ni apks edge/x86_64</title>'
-            echo '<h1>Prebuilt apks (edge/x86_64)</h1><ul>'
-            for f in dist/edge/j34ni/x86_64/*.apk; do
-              echo "<li><a href=\"./$(basename "$f")\">$(basename "$f")</a></li>"
-            done
-            echo '</ul><p><a href="../../../index.html">back</a></p>'
-          } > dist/edge/j34ni/x86_64/index.html
+          for d in dist/edge/j34ni/*/; do
+            A=$(basename "$d")
+            [ -f "$d/APKINDEX.tar.gz" ] || continue
+            {
+              echo "<!doctype html><meta charset=\"utf-8\"><title>j34ni apks edge/$A</title>"
+              echo "<h1>Prebuilt apks (edge/$A)</h1><ul>"
+              for f in "$d"/*.apk; do
+                echo "<li><a href=\"./$(basename "$f")\">$(basename "$f")</a></li>"
+              done
+              echo '</ul><p><a href="../../index.html">back</a></p>'
+            } > "$d/index.html"
+          done
 
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist
 
   deploy:
-    needs: build
+    needs: assemble
     runs-on: ubuntu-latest
     environment:
       name: github-pages
