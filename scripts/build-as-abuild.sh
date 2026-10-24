@@ -8,9 +8,13 @@
 set -eu
 : "${WS:?}" : "${KEYS:?}" : "${CACHE:?}"
 : "${PACKAGER:=j34ni <jeani@uio.no>}"
+# ARCH: defaults to the native arch of the build environment (abuild derives
+# CARCH from it; a riscv64 container produces riscv64 packages).
+: "${ARCH:=$(cat /etc/apk/arch)}"
+CHOST="$ARCH-alpine-linux-musl"
 PKGS="${PKGS:-cassini-headers cxi-uapi-headers libcxi xpmem libfabric openblas metis mpich-4.3.2 scotch scalapack mumps hdf5-mpich petsc lamem osu-micro-benchmarks}"
-MANIFEST="$WS/out/built-manifest.txt"
-OUT="$WS/out/j34ni/x86_64"
+MANIFEST="$WS/out/built-manifest-$ARCH.txt"
+OUT="$WS/out/j34ni/$ARCH"
 
 CFG="$HOME/.config/abuild"
 mkdir -p "$CFG" "$OUT" "$WS/out"
@@ -39,7 +43,18 @@ while read -r line; do
 	[ "$in" = 0 ] && printf '%s\n' "$line" >> "$NEWMANIFEST"
 done < "$MANIFEST"
 
-pkgbase() { ( set +u; CARCH=x86_64 CBUILD=x86_64-alpine-linux-musl CHOST=x86_64-alpine-linux-musl srcdir=/tmp pkgdir=/tmp startdir=/tmp . "$WS/j34ni/$1/APKBUILD"; printf '%s' "${pkgname:-}"; ); }
+pkgbase() { ( set +u; CARCH="$ARCH" CBUILD="$CHOST" CHOST="$CHOST" srcdir=/tmp pkgdir=/tmp startdir=/tmp . "$WS/j34ni/$1/APKBUILD"; printf '%s' "${pkgname:-}"; ); }
+
+# Expected apk filenames of a package: pkgname + expanded subpackages
+# (entries like "$pkgname-doc:func" keep only the name part).
+apknames() { ( set +u
+	CARCH="$ARCH" CBUILD="$CHOST" CHOST="$CHOST" srcdir=/tmp pkgdir=/tmp startdir=/tmp
+	. "$WS/j34ni/$1/APKBUILD"
+	for n in $pkgname $subpackages; do
+		n=${n%%:*}
+		case "$n" in *['$=!']*) continue ;; esac
+		printf '%s-%s-r%s.apk\n' "$n" "$pkgver" "$pkgrel"
+	done ); }
 
 fingerprint() {
 	{
@@ -76,12 +91,23 @@ for p in $PKGS; do
 	[ -n "$old" ] && rm -f $OUT/$old
 	rm -rf "$WS/j34ni/$p/src" "$WS/j34ni/$p/pkg" "$WS/j34ni/$p/.abuild"
 	cd "$WS/j34ni/$p"
-	touch "$WS/out/.build-marker"
+	before="$WS/out/.apks-before.$$"
+	(cd "$OUT" && ls *.apk 2>/dev/null | sort) > "$before"
 	echo "==== FETCH $p"
 	abuild fetch || { sleep 30; abuild fetch; } || { sleep 60; abuild fetch; }
 	echo "==== BUILD $p"
 	abuild -r
-	built=$(cd "$OUT" && find . -name '*.apk' -newer "$WS/out/.build-marker" | sed 's|^\./||' | sort | paste -sd,)
+	# Detect this package's apks by NAME, not mtime: abuild -r silently
+	# discards a rebuild whose output is byte-identical to the apk already
+	# published in REPODEST (e.g. dependency-fingerprint-triggered rebuilds
+	# with unchanged output), so -newer markers would miss valid outputs.
+	after="$WS/out/.apks-after.$$"
+	(cd "$OUT" && ls *.apk 2>/dev/null | sort) > "$after"
+	built=$( { apknames "$p"; comm -13 "$before" "$after"; } \
+		| sort -u | while read -r a; do [ -f "$OUT/$a" ] && printf '%s\n' "$a"; done \
+		| paste -sd,)
+	rm -f "$before" "$after"
+	[ -n "$built" ] || echo "WARN: no apks detected for $p"
 	echo "$fp $p $built" >> "$NEWMANIFEST"
 done
 mv "$NEWMANIFEST" "$MANIFEST"
