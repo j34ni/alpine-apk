@@ -5,7 +5,7 @@ pkgrel=1
 pkgdesc="MUltifrontal Massively Parallel sparse direct Solver (MPICH, PT-Scotch+METIS ordering)"
 url="https://mumps-solver.org"
 license="CECILL-C"
-arch="x86_64"
+arch="x86_64 riscv64"
 makedepends="
 	gfortran
 	metis-dev

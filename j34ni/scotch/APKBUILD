@@ -5,7 +5,7 @@ pkgrel=0
 pkgdesc="Graph and mesh partitioning library (serial and MPI-based PT-Scotch)"
 url="https://gitlab.inria.fr/scotch/scotch"
 license="CECILL-C"
-arch="x86_64 aarch64"
+arch="x86_64 aarch64 riscv64"
 makedepends="
 	bzip2-dev
 	cmake

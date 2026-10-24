@@ -1,0 +1,19 @@
+--- a/include/cxi_prov_hw.h
++++ b/include/cxi_prov_hw.h
+@@ -49,6 +49,16 @@
+ #define wp_fence() sfence()
+ #define wc_fence() sfence()
+ 
++#elif defined(__riscv)
++
++/* Strong I/O write ordering (fence ow,ow) orders device (MMIO/WC) writes
++ * like x86 sfence and arm dmb oshst: command writes before the doorbell,
++ * and write-combining region writes with respect to each other. */
++
++#define sfence() __asm__ __volatile__ ("fence ow, ow" ::: "memory")
++#define wp_fence() sfence()
++#define wc_fence() sfence()
++
+ #else
+ #error "Unsupported CPU architecture"
+ #endif

@@ -5,7 +5,7 @@ pkgrel=0
 pkgdesc="Lithosphere and Mantle Evolution Model - a geodynamic finite difference code"
 url="https://github.com/UniMainzGeo/LaMEM"
 license="MIT"
-arch="x86_64 aarch64"
+arch="x86_64 aarch64 riscv64"
 makedepends="
 	mpich-dev
 	petsc-dev

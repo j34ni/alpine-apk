@@ -46,6 +46,11 @@ aarch64)
 arm*)
 	_flags="$_flags DYNAMIC_ARCH=0 TARGET=ARMV7"
 	;;
+riscv64)
+	# no DYNAMIC_ARCH on RISC-V yet; pin the generic kernel so builds
+	# don't depend on per-CPU autoding (SiFive/D23 quirks).
+	_flags="$_flags DYNAMIC_ARCH=0 TARGET=RISCV64_GENERIC"
+	;;
 *)
 	_flags="$_flags DYNAMIC_ARCH=0"
 	;;

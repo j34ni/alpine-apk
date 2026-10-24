@@ -5,7 +5,7 @@ pkgrel=2
 pkgdesc="Portable, Extensible Toolkit for Scientific Computation (MPICH)" 
 url="https://petsc.org/"
 license="BSD-2-Clause"
-arch="x86_64 aarch64"
+arch="x86_64 aarch64 riscv64"
 makedepends="
 	openblas-dev
 	gfortran

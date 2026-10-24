@@ -5,7 +5,7 @@
 _realname=shs-cxi-driver
 pkgname=cxi-uapi-headers
 pkgver=14.0.1
-pkgrel=0
+pkgrel=1
 pkgdesc="HPE Slingshot CXI kernel UAPI headers (userspace)"
 url="https://github.com/HewlettPackard/shs-cxi-driver"
 license="GPL-2.0-or-later"

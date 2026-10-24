@@ -5,7 +5,7 @@ pkgrel=0
 pkgdesc="Highly scalable linear algebra library for distributed-memory message-passing computers"
 url="https://www.netlib.org/scalapack/"
 license="BSD-2-Clause"
-arch="x86_64 aarch64"
+arch="x86_64 aarch64 riscv64"
 makedepends="
 	cmake
 	gfortran

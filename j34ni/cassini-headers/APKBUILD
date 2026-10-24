@@ -2,12 +2,14 @@
 _realname=shs-cassini-headers
 pkgname=cassini-headers
 pkgver=14.0.1
-pkgrel=0
+pkgrel=1
 pkgdesc="HPE Slingshot Cassini CSR and counter definitions headers"
 url="https://github.com/HewlettPackard/shs-cassini-headers"
 license="GPL-2.0-or-later OR BSD-3-Clause"
 arch="noarch"
-source="$_realname-$pkgver.tar.gz::$url/archive/refs/tags/release/shs-$pkgver.tar.gz"
+source="$_realname-$pkgver.tar.gz::$url/archive/refs/tags/release/shs-$pkgver.tar.gz
+	riscv64-fence.patch
+	"
 builddir="$srcdir/$_realname-release-shs-$pkgver"
 
 build() {
@@ -26,4 +28,5 @@ package() {
 
 sha512sums="
 bf75772d795644d7fbda5e3033fd6786ac4649c8cfc86d1447b87027c32855a5f31ca48ab542be6bd01a96b95383562c3417353643e9eb56f749a736138ab0e1  shs-cassini-headers-14.0.1.tar.gz
+0d7330cdbf07e0f295ca1c92811cff9bbfd479186fa7aeb4200935aa3f31f87d7aedae2765a00b114f8e373d84d965cb7062459d04cc5ebeecf7f02f894209cc  riscv64-fence.patch
 "

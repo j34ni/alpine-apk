@@ -5,7 +5,7 @@ pkgrel=0
 pkgdesc="Serial graph partitioning and fill-reducing matrix ordering library"
 url="https://github.com/KarypisLab/METIS"
 license="Apache-2.0"
-arch="x86_64 aarch64"
+arch="x86_64 aarch64 riscv64"
 makedepends="
 	cmake
 	make

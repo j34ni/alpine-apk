@@ -3,11 +3,11 @@
 _realname=shs-libfabric
 pkgname=libfabric
 pkgver=14.0.1
-pkgrel=0
+pkgrel=1
 pkgdesc="Library for high performance fabric networks (HPE Slingshot fork, CXI provider)"
 url="https://github.com/HewlettPackard/shs-libfabric"
 license="BSD-2-Clause OR GPL-2.0-only"
-arch="x86_64 aarch64"
+arch="x86_64 aarch64 riscv64"
 options="!check" # tests need CXI hardware
 depends_dev="
 	cassini-headers=$pkgver-r$pkgrel
