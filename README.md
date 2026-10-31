@@ -5,6 +5,7 @@ Current contents:
 - HPE Slingshot (SHS) userspace stack: `cassini-headers`, `cxi-uapi-headers`, `libcxi`, `xpmem`, `libfabric`
 - MPI: `mpich` 4.3.2 (plus the `osu-micro-benchmarks` suite built against it)
 - Math libraries: `openblas` 0.3.34 (DYNAMIC_ARCH runtime dispatch; fixes the broken dispatch of community openblas 0.3.30-r2) with `liblapack`/`liblapacke` subpackages
+- `hypre` 3.2.0 (MPICH-linked, shared) — PETSc BoomerAMG preconditioner package
 
 Builds are incremental: each push rebuilds only the packages whose APKBUILD
 fingerprint changed (`built-manifest-<arch>.txt`), and publishes the full set.

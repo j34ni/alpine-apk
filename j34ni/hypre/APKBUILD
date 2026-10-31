@@ -1,0 +1,54 @@
+# Maintainer: Jean Iaquinta <jeani@uio.no>
+pkgname=hypre
+pkgver=3.2.0
+pkgrel=0
+pkgdesc="Uniform and parallel algebraic solvers and preconditioners library"
+url="https://github.com/hypre-space/hypre"
+license="MIT AND Apache-2.0"
+arch="x86_64 aarch64 riscv64"
+makedepends="
+	gfortran
+	mpich-dev
+	"
+subpackages="$pkgname-dev"
+source="
+	hypre-$pkgver.tar.gz::https://github.com/hypre-space/hypre/archive/refs/tags/v$pkgver.tar.gz
+	"
+builddir="$srcdir/hypre-$pkgver/src"
+options="!check"
+
+build() {
+	# configure is pre-generated in the tag archive (src/configure).
+	# --enable-shared is required (default is NO); int stays 32-bit, matching
+	# the PETSc consumers in this repo.
+	CC=mpicc CXX=mpicxx FC=mpifort ./configure \
+		--prefix=/usr \
+		--sysconfdir=/etc \
+		--mandir=/usr/share/man \
+		--infodir=/usr/share/info \
+		--with-MPI \
+		--enable-shared \
+		--disable-static
+	make
+}
+
+package() {
+	# hypre's install target ignores DESTDIR (it cp's into the configured
+	# prefix directly); copy the src/hypre staging directory built by make.
+	cd "$builddir"
+	install -d "$pkgdir"/usr/include "$pkgdir"/usr/lib
+	cp -a hypre/include/. "$pkgdir"/usr/include/
+	cp -a hypre/lib/. "$pkgdir"/usr/lib/
+	install -Dm644 "$srcdir/hypre-$pkgver/LICENSE-MIT" \
+		"$pkgdir"/usr/share/licenses/$pkgname/LICENSE-MIT
+	install -Dm644 "$srcdir/hypre-$pkgver/LICENSE-APACHE" \
+		"$pkgdir"/usr/share/licenses/$pkgname/LICENSE-APACHE
+}
+
+dev() {
+	default_dev
+}
+
+sha512sums="
+1c315f19dfe5a0bbc5f45fd61162694f8d6261282f6c4add1eaba2f9aed00ba21652f1a39b7277fcb0f82ae5ff149b942ae85155eb5562aa8707b192434c8fd9  hypre-3.2.0.tar.gz
+"

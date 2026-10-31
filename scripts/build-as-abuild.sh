@@ -12,7 +12,7 @@ set -eu
 # CARCH from it; a riscv64 container produces riscv64 packages).
 : "${ARCH:=$(cat /etc/apk/arch)}"
 CHOST="$ARCH-alpine-linux-musl"
-PKGS="${PKGS:-cassini-headers cxi-uapi-headers libcxi xpmem libfabric openblas metis mpich-4.3.2 scotch scalapack mumps hdf5-mpich petsc lamem osu-micro-benchmarks}"
+PKGS="${PKGS:-cassini-headers cxi-uapi-headers libcxi xpmem libfabric openblas metis mpich-4.3.2 scotch scalapack mumps hypre hdf5-mpich petsc lamem osu-micro-benchmarks}"
 MANIFEST="$WS/out/built-manifest-$ARCH.txt"
 OUT="$WS/out/j34ni/$ARCH"
 
