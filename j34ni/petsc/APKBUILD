@@ -1,7 +1,7 @@
 # Maintainer: Jean Iaquinta <jeani@uio.no>
 pkgname=petsc
 pkgver=3.25.5
-pkgrel=2
+pkgrel=3
 pkgdesc="Portable, Extensible Toolkit for Scientific Computation (MPICH)" 
 url="https://petsc.org/"
 license="BSD-2-Clause"
@@ -10,6 +10,7 @@ makedepends="
 	openblas-dev
 	gfortran
 	hdf5-mpich-dev
+	hypre-dev
 	metis-dev
 	mpich-dev
 	mumps-dev
@@ -20,13 +21,14 @@ makedepends="
 # Named hdf5-mpich deps, not just the auto so:libhdf5.so.320: community's
 # serial 'hdf5' provides the same soname but lacks the MPI-IO entry points
 # (H5Pset_fapl_mpio), which breaks libpetsc at load time.
-depends="python3 hdf5-mpich hdf5-mpich-hl"
+depends="python3 hdf5-mpich hdf5-mpich-hl hypre"
 # Anything that ends up in PETSc's link line (conf/variables) must be
 # present when a consumer links against petsc-dev, e.g. LaMEM.
 depends_dev="
 	openblas-dev
 	gfortran
 	hdf5-mpich-dev
+	hypre-dev
 	metis-dev
 	mpich-dev
 	mumps-dev
@@ -73,6 +75,9 @@ build() {
 		--with-metis=1 \
 		--with-metis-include=/usr/include \
 		--with-metis-lib=-lmetis \
+		--with-hypre=1 \
+		--with-hypre-include=/usr/include \
+		--with-hypre-lib=-lHYPRE \
 		--with-mpi=1 \
 		--with-mumps=1 \
 		--with-mumps-include=/usr/include \
