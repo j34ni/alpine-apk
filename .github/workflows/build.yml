@@ -22,11 +22,12 @@ jobs:
         include:
           - arch: x86_64
             runner: ubuntu-latest
+          # Shelved for now; re-enable when riscv64 is needed again.
           # RISE project: free hosted RISC-V runners for open source.
           # One-time setup: install the GitHub App (riseproject-dev/riscv-runner).
           # Native riscv64 hardware with Docker; alpine:edge runs natively.
-          - arch: riscv64
-            runner: ubuntu-24.04-riscv
+          # - arch: riscv64
+          #   runner: ubuntu-24.04-riscv
     runs-on: ${{ matrix.runner }}
     steps:
       - uses: actions/checkout@v4
@@ -99,7 +100,7 @@ jobs:
           KEY=$(basename keys/*.rsa.pub)
           {
             echo '<!doctype html><meta charset="utf-8"><title>j34ni alpine repo</title>'
-            echo '<h1>alpine-apk (edge: x86_64 + riscv64)</h1>'
+            echo '<h1>alpine-apk (edge)</h1>'
             echo "<p>Install: <code>wget -O /etc/apk/keys/$KEY https://j34ni.github.io/alpine-apk/keys/$KEY</code> then <code>echo https://j34ni.github.io/alpine-apk/edge/j34ni >> /etc/apk/repositories && apk update</code> (same repo line for x86_64 and riscv64)</p>"
             for d in dist/edge/j34ni/*/; do
               A=$(basename "$d")
