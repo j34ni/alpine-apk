@@ -1,0 +1,135 @@
+# Maintainer: Jean Iaquinta <jeani@uio.no>
+# Kept identical to the shs-mpich aports recipe (same source commit, same
+# configure flags); only arch differs (this repo also builds riscv64).
+pkgname=mpich
+# apk version format (abuild validate) rejects the upstream "5.1.0a1" spelling,
+# so the pre-release is spelled _alpha1; the code built is exactly the commit
+# in _commit below (the v5.1.0a1 tag is 2883e030, a different commit).
+pkgver=5.1.0_alpha1
+_commit=3a753339f179bdcd44145bf81f43931d2c20110b
+_hwloc=42bebfa5e4b96c99c2482645c8eb86d4755ef23b
+_libfabric=a2ff1618e5490a4d8e5da6277d69993149701f2f
+_mydef_boot=ea2d6852486755eb12e255f760e2eb62f5446329
+_ucx=4020d2be2271da0ac105d824f26ec76ad533577a
+pkgrel=0
+pkgdesc="High-quality portable implementation of the Message Passing Interface (MPI) standard"
+url="https://www.mpich.org/"
+license="LicenseRef-MPICH" # MIT-style with export/acknowledgement clauses, as on conda-forge
+arch="x86_64 aarch64 riscv64"
+options="!check" # test suite is not self-contained (long-running, device-dependent)
+makedepends="
+	autoconf
+	automake
+	bash
+	bison
+	curl-dev
+	flex
+	gfortran
+	hwloc-dev
+	json-c-dev
+	libcxi-dev
+	libfabric-dev
+	libtool
+	m4
+	patch
+	perl
+	python3
+	rdma-core-dev
+	xpmem-dev
+	"
+subpackages="$pkgname-dev $pkgname-doc"
+
+# Same source as the conda build (mpich-feedstock recipe.yaml): the git
+# commit, not the mpich.org tarball, so both stacks compile identical code
+# and the 5.0.2-era patches (rma-am-tag, ofi-pipeline-deferred-am-hdr-sz)
+# are not needed. abuild-fetch only takes plain URLs (no git+), so the
+# commit and its submodules come as GitHub archives, pinned by sha512.
+source="
+	mpich-$_commit.tar.gz::https://github.com/pmodels/mpich/archive/$_commit.tar.gz
+	hwloc-$_hwloc.tar.gz::https://github.com/pmodels/hwloc/archive/$_hwloc.tar.gz
+	libfabric-$_libfabric.tar.gz::https://github.com/pmodels/libfabric/archive/$_libfabric.tar.gz
+	mydef_boot-$_mydef_boot.tar.gz::https://github.com/pmodels/mydef_boot/archive/$_mydef_boot.tar.gz
+	ucx-$_ucx.tar.gz::https://github.com/pmodels/ucx/archive/$_ucx.tar.gz
+	"
+builddir="$srcdir/mpich-$_commit"
+
+prepare() {
+	default_prepare
+
+	# autogen.sh refuses to run if a submodule directory is empty
+	# ("git submodule update --init"), and the archives above are the
+	# exact SHAs recorded by `git submodule status` at $_commit.
+	local m
+	for m in hwloc:$_hwloc libfabric:$_libfabric mydef_boot:$_mydef_boot ucx:$_ucx; do
+		dir=${m%%:*}; sha=${m##*:}
+		rm -rf "modules/$dir"
+		mv "$srcdir/$dir-$sha" "modules/$dir"
+	done
+
+	./autogen.sh
+}
+
+build() {
+	# gfortran >= 10 aborts on mismatched dummy/actual args in MPICH Fortran
+	export FFLAGS="-fallow-argument-mismatch ${FFLAGS:-}"
+	export FCFLAGS="-fallow-argument-mismatch ${FCFLAGS:-}"
+
+	# --enable-fortran, not --enable-fortran=all: 5.1.0a1 tests the flag
+	# with "= yes" (configure.ac:451, 3315), so "all" silently skips the
+	# whole Fortran binding tree -> no mpifort, no libmpifort.
+	# --enable-f08 no longer exists upstream (removed in 5.1.0a1).
+	./configure \
+		--prefix=/usr \
+		--sysconfdir=/etc/mpich \
+		--disable-doc \
+		--disable-dependency-tracking \
+		--disable-option-checking \
+		--disable-static \
+		--enable-cxx \
+		--enable-fortran \
+		--enable-mpi-abi=both \
+		--enable-romio \
+		--with-device=ch4:ofi \
+		--with-hwloc=/usr \
+		--with-libfabric=/usr \
+		--with-libfabric-include=/usr/include \
+		--with-libfabric-lib=/usr/lib \
+		--with-pm=hydra:gforker \
+		--with-wrapper-dl-type=none \
+		--with-dl-type=none \
+		--with-xpmem=/usr \
+		--with-xpmem-include=/usr/include \
+		--with-xpmem-lib=/usr/lib
+	make
+}
+
+package() {
+	make DESTDIR="$pkgdir" install
+	rm -f "$pkgdir"/usr/lib/*.la
+
+	# abuild runs `apk version --check` on every Version: line of the
+	# pkgconfig files (abuild:1287) and upstream's "5.1.0a1" is not an apk
+	# version, so the .pc files report the pkgver spelling.
+	sed -i "s/^Version: .*/Version: $pkgver/" "$pkgdir"/usr/lib/pkgconfig/*.pc
+
+	install -d "$pkgdir"/usr/share/licenses/$pkgname
+	install -m 644 COPYRIGHT "$pkgdir"/usr/share/licenses/$pkgname
+}
+
+dev() {
+	default_dev
+
+	local i; for i in mpicc mpicxx mpic++ mpiCC mpifort mpif90 mpif77; do
+		if [ -e "$pkgdir"/usr/bin/$i ]; then
+			amove usr/bin/$i
+		fi
+	done
+}
+
+sha512sums="
+c0a98c4fd293f7584aaa9b0bc88bfa48c5c4b8ee65a7176bcf8ffe3c90fa6f0bc4a63ad1318145dcc889a1cd355999f3051c5984918fc1d11fb089a6c1501d15  mpich-3a753339f179bdcd44145bf81f43931d2c20110b.tar.gz
+87aff1e0eb7389a8d433f2936b6e23e8c37381d46fb7e60a205a97bc0f86f3c8926e3a6da6e54d4aeb89ef19abbe73a9d392f8c7871108b2a9fbf0b011de9f2c  hwloc-42bebfa5e4b96c99c2482645c8eb86d4755ef23b.tar.gz
+620295de28239c9dd55f4867ae0c89448e99e7bdef73eb8432575c79ba99a2d1514ed518b1694c611d89b51f293f8650eb8b06dfea2f47c0acaca9cf629318fc  libfabric-a2ff1618e5490a4d8e5da6277d69993149701f2f.tar.gz
+d06aa85ff697dc863481ebb404b1b61e0056b8a98af9e638d00d0ed2b3bc4751f6707eb8619f11b3a0295cfc03f23ac4b367aa92b49449d5e885d4b2fa196e8f  mydef_boot-ea2d6852486755eb12e255f760e2eb62f5446329.tar.gz
+fe0e31f5b213bad087984b10b9710821022a62a48a56080a853c1660e054a1fe3d8d854dd8adf5a5fc36506bf0796e62f9e7b5293e701e296fe007f6a305fe54  ucx-4020d2be2271da0ac105d824f26ec76ad533577a.tar.gz
+"
